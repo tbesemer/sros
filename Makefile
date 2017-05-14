@@ -1,12 +1,19 @@
+#  Setup the Environment.
+#
 SROS_ROOT := $(shell pwd)
+include ${SROS_ROOT}/make/makefile_os.inc
 
-BUILDROOT_BASE := ${SROS_ROOT}/buildroot-2017.02.2
-KERNEL_BASE := ${SROS_ROOT}/linux-4.9.13
-TOOLCHAIN_DIR := ${BUILDROOT_BASE}/output/host/usr/bin
-TOOLCHAIN_PREFIX := powerpc-linux-
+#  Master Build Targets
+#
+.PHONY: all
+all:  buildroot_defconfig buildroot kernel_defconfig kernel
 
-export PATH := ${PATH}:${TOOLCHAIN_DIR}
+.PHONY: clean
+clean:	kernel_mrproper buildroot_clean
 
+
+#  Buildroot Build Targets.
+#
 .PHONY: buildroot
 buildroot:
 	make -C ${BUILDROOT_BASE}
@@ -33,7 +40,8 @@ buildroot_clean:
 	make -C ${BUILDROOT_BASE} clean
 	rm -f ${SROS_ROOT}/output/rootfs.tar
 
-
+#  Kernel Build Targets.
+#
 .PHONY: kernel
 kernel:
 	make -C ${KERNEL_BASE} V=1 ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} uImage
@@ -60,7 +68,7 @@ kernel_saveconfig:
 
 .PHONY: kernel_mrproper
 kernel_mrproper:
-	make -C ${KERNEL_BASE} ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} mrproper
+	make -C ${KERNEL_BASE} V=1 ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} mrproper
 	rm -f ${SROS_ROOT}/output/uImage
 	rm -f ${SROS_ROOT}/output/yosemite.dtb
 
