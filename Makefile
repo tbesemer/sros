@@ -14,7 +14,11 @@ buildroot:
 
 .PHONY: buildroot_defconfig
 buildroot_defconfig:
-	cp -p ${SROS_ROOT}/config/sros_config ${BUILDROOT_BASE}/.config
+	@ if [ -f ${BUILDROOT_BASE}/.config ]; then \
+	      echo "Config Exists, Not Overwriting"; \
+	  else \
+	      cp -p ${SROS_ROOT}/config/sros_config ${BUILDROOT_BASE}/.config; \
+          fi;
 
 .PHONY: buildroot_saveconfig
 buildroot_saveconfig:
@@ -39,8 +43,12 @@ kernel:
 
 .PHONY: kernel_defconfig
 kernel_defconfig:
-	cp -p ${SROS_ROOT}/config/sros_kernel_config ${KERNEL_BASE}/.config
-	make -C ${KERNEL_BASE} ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} oldconfig
+	@ if [ -f ${KERNEL_BASE}/.config ]; then \
+	      echo "Config Exists, Not Overwriting"; \
+	  else \
+	      cp -p ${SROS_ROOT}/config/sros_kernel_config ${KERNEL_BASE}/.config; \
+	      make -C ${KERNEL_BASE} ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} oldconfig; \
+          fi;
 
 .PHONY: kernel_xconfig
 kernel_xconfig:
