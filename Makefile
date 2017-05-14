@@ -38,6 +38,7 @@ buildroot_xconfig:
 .PHONY: buildroot_clean
 buildroot_clean:
 	make -C ${BUILDROOT_BASE} clean
+	rm -f ${BUILDROOT_BASE}/.config
 	rm -f ${SROS_ROOT}/output/rootfs.tar
 
 #  Kernel Build Targets.
