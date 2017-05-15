@@ -1,0 +1,12 @@
+
+SROS_ROOT=`pwd`
+if [ ! -d make ]
+then
+    echo "Needs to be sourced from ~/sros"
+else
+    export BUILDROOT_BASE=${SROS_ROOT}/buildroot-2017.02.2
+    export KERNEL_BASE=${SROS_ROOT}/linux-4.9.13
+    export TOOLCHAIN_DIR=${BUILDROOT_BASE}/output/host/usr/bin
+    export TOOLCHAIN_PREFIX=powerpc-linux-
+    export PATH=${PATH}:${TOOLCHAIN_DIR}
+fi
