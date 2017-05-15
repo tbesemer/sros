@@ -73,3 +73,6 @@ kernel_mrproper:
 	rm -f ${SROS_ROOT}/output/uImage
 	rm -f ${SROS_ROOT}/output/yosemite.dtb
 
+.PHONY: help
+help:
+	@ less README_help.txt
