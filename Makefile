@@ -73,6 +73,12 @@ kernel_mrproper:
 	rm -f ${SROS_ROOT}/output/uImage
 	rm -f ${SROS_ROOT}/output/yosemite.dtb
 
+.PHONY: uboot
+uboot:
+	make -C ${UBOOT_BASE} CROSS_COMPILE=${TOOLCHAIN_PREFIX} V=1 yosemite_config
+	make -C ${UBOOT_BASE} CROSS_COMPILE=${TOOLCHAIN_PREFIX} V=1 
+	cp -p ${UBOOT_BASE}/u-boot.bin ${SROS_ROOT}/output/u-boot.bin
+
 .PHONY: help
 help:
 	@ less README_help.txt

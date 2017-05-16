@@ -42,6 +42,9 @@ Kernel Management Targets:
   kernel_mrproper:         #  Cleans Kernel, including removing the
                            #  configuration file.  Use with care.
 
+  uboot:                   #  Configure and Build U-Boot. Not part of
+                           #  default build.
+
 Notes:
 
   All output goes into ~/output.  Example:
