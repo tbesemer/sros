@@ -105,8 +105,8 @@ notrace unsigned long __init early_init(unsigned long dt_ptr)
 extern unsigned int memset_nocache_branch; /* Insn to be replaced by NOP */
 
 
-static char *tom_thr = (char *)0xEF600000;
-static char *tom_lsr = (char *)0xEF600005;
+static char *tom_thr = (char *)0xEF600300;
+static char *tom_lsr = (char *)0xEF600305;
 
 void __init tom_serial( char c )
 {
