@@ -40,6 +40,141 @@ static void reset_with_rli(void)
 
 void reconfigure_pll(u32 new_cpu_freq)
 {
+ 
+#if defined(CONFIG_440EP)
+    int	reset_needed = 0;
+    u32	reg;
+    u32	prbdv0, target_prbdv0,			//CLK_PRIMBD 
+    fwdva, target_fwdva, fwdvb, target_fwdvb,	//CLK_PLLD 
+    fbdv, target_fbdv, lfbdv, target_lfbdv,
+    perdv0,	target_perdv0,			// CLK_PERD 
+    opbdv0,     target_opbdv0,                  // CLK_OPB 
+    pradv0, target_pradv0,
+    eng,        target_eng,
+    src,        target_src,
+    sel,        target_sel,
+    tune,       target_tune;
+    
+    
+    if (new_cpu_freq == 667)
+    {
+	/* PPC440EP Embedded Processor User's Manual Ch 15 */
+	
+	/* Table 15-1 Configure for PLL Local feedback */
+	target_eng = 1;
+	target_sel = 0;
+	/* Table 15-2 Use forward divisor A for SysClk multiplier M 
+	 * M = FBDV x LFBDV x FWDVA = 20 */
+	target_src = 0;
+	target_fbdv = 5;
+	target_lfbdv = 2;
+	target_fwdva = 2;
+	/* Table 15-6 Set tune bits according to M=20 value and end VCO 
+	 * frequency VCO = SysClk x M  = 1320 */
+	target_tune = 0x2B8; 
+
+	/* Table 15-9 Set FWDVA, PRADV0, FWDVB, PRDB0 for right frequencies
+	 * VCO = SysClk x M
+	 * CPU = VCO / FWDVA / PRADV0 = SysClk x M / 2 = 667
+	 * PLB = VCO / FWDVB / PRDVB0 = SysClk x M / 10 = 133 */
+	target_pradv0 = 1;
+	target_prbdv0 = 2;
+	target_fwdvb = 5;
+
+	target_perdv0 = 2; // Why is this set? Not used in PLL Local feedback..
+	target_opbdv0 = 1; // Also not used in PLL local
+
+	mfcpr(CPR0_PLLC, reg);
+	tune = (reg & PLLC_TUNE_MASK);
+	sel =  (reg & PLLC_SEL_MASK) >> 24;
+	src =  (reg & PLLC_SRC_MASK) >> 29;
+	eng =  (reg & PLLC_ENG_MASK) >> 30;
+	
+	if (tune != target_tune || sel != target_sel || src != target_src || eng != target_eng)
+	{
+	    reg &= ~(PLLC_TUNE_MASK | PLLC_SEL_MASK |
+		    PLLC_SRC_MASK | PLLC_ENG_MASK);
+	    reg |= (target_eng << 30) |
+		    (target_src << 29) |
+		    (target_sel << 24) |
+		    target_tune;
+	    mtcpr(CPR0_PLLC, reg);
+	    reset_needed = 1;
+	}
+	
+	mfcpr(CPR0_PRIMAD0, reg);
+	pradv0 = (reg & PRADV_MASK) >> 24;
+	if (pradv0 != target_pradv0) {
+	    reg &= ~PRADV_MASK;
+	    reg |= (target_pradv0 << 24);
+	    mtcpr(CPR0_PRIMAD0, reg);
+	    reset_needed = 1;
+	}
+	    
+	mfcpr(CPR0_PRIMBD0, reg);
+	prbdv0 = (reg & PRBDV_MASK) >> 24;
+	if (prbdv0 != target_prbdv0) {
+	    reg &= ~PRBDV_MASK;
+	    reg |= (target_prbdv0 << 24);
+	    mtcpr(CPR0_PRIMBD0, reg);
+	    reset_needed = 1;
+	}
+
+	mfcpr(CPR0_PLLD, reg);
+	fwdva = (reg & PLLD_FWDVA_MASK) >> 16;
+	fwdvb = (reg & PLLD_FWDVB_MASK) >> 8;
+	fbdv = (reg & PLLD_FBDV_MASK) >> 24;
+	lfbdv = (reg & PLLD_LFBDV_MASK);
+	
+	if (fwdva != target_fwdva || fwdvb != target_fwdvb
+	    || fbdv != target_fbdv || lfbdv != target_lfbdv) {
+	    reg &= ~(PLLD_FWDVA_MASK | PLLD_FWDVB_MASK |
+		    PLLD_FBDV_MASK | PLLD_LFBDV_MASK);
+	    reg |= (target_fwdva << 16) |
+		    (target_fwdvb << 8) |
+		    (target_fbdv << 24) |
+		    target_lfbdv;
+	    mtcpr(CPR0_PLLD, reg);
+	    reset_needed = 1;
+	}
+	
+	mfcpr(CPR0_OPBD0, reg);	
+	opbdv0 = (reg & OPBDDV_MASK) >> 24;
+	if (opbdv0 != target_opbdv0) {
+	    reg &= ~OPBDDV_MASK;
+	    reg |= (target_opbdv0 << 24);
+	    mtcpr(CPR0_OPBD0, reg);
+	    reset_needed = 1;
+	}
+	
+	mfcpr(CPR0_PERD, reg);
+	perdv0 = (reg & PERDV_MASK) >> 24;
+	if (perdv0 != target_perdv0) {
+	    reg &= ~PERDV_MASK;
+	    reg |= (target_perdv0 << 24);
+	    mtcpr(CPR0_PERD, reg);
+	    reset_needed = 1;
+	}
+	
+	/* Set reload inhibit so configuration will persist across
+	 * processor resets */
+	mfcpr(CPR0_ICFG, reg);
+	reg &= ~CPR0_ICFG_RLI_MASK;
+	reg |= 1 << 31;
+	mtcpr(CPR0_ICFG, reg);
+    }
+    
+    /* Reset processor if configuration changed */
+    if (reset_needed) 
+    {	
+	__asm__ __volatile__ ("sync; isync");
+	mtspr (SPRN_DBCR0, 0x20000000);
+    }
+    
+	
+    
+#endif
+ 
 #if defined(CONFIG_440EPX)
 	int	reset_needed = 0;
 	u32	reg, temp;

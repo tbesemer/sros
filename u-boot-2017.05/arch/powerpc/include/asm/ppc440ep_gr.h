@@ -161,17 +161,25 @@
 #define PLLSYS0_PRI_DIV_B_MASK	0x0000001c	/* PLL Primary Divisor B */
 #define PLLSYS0_OPB_DIV_MASK	0x00000003	/* OPB Divisor */
 
-#define PLLC_ENG_MASK		0x20000000  /* PLL primary forward divisor source */
+/* PPC440EP Embedded Processor User's Manual Figure 15-5*/
+#define PLLC_RST_MASK		0x80000000  /* PLL reset   */
+#define PLLC_ENG_MASK		0x40000000  /* PLL primary forward divisor source */
 #define PLLC_SRC_MASK		0x20000000  /* PLL feedback source   */
+#define PLLC_SEL_MASK		0x07000000  /* PLL feedback selection   */
+#define PLLC_TUNE_MASK		0x000003ff  /* PLL Tune Bits   */
+
+/* PPC440EP Embedded Processor User's Manual Figure 15-6*/
 #define PLLD_FBDV_MASK		0x1f000000  /* PLL Feedback Divisor  */
 #define PLLD_FWDVA_MASK		0x000f0000  /* PLL Forward Divisor A */
 #define PLLD_FWDVB_MASK		0x00000700  /* PLL Forward Divisor B */
 #define PLLD_LFBDV_MASK		0x0000003f  /* PLL Local Feedback Divisor */
 
-#define OPBDDV_MASK		0x03000000  /* OPB Clock Divisor Register */
-#define PERDV_MASK		0x07000000  /* Peripheral Clock Divisor */
+/* PPC440EP Embedded Processor User's Manual Figure 15-7 to 15-10*/
 #define PRADV_MASK		0x07000000  /* Primary Divisor A */
 #define PRBDV_MASK		0x07000000  /* Primary Divisor B */
+#define OPBDDV_MASK		0x03000000  /* OPB Clock Divisor Register */
+#define PERDV_MASK		0x07000000  /* Peripheral Clock Divisor */
+
 #define SPCID_MASK		0x03000000  /* Sync PCI Divisor  */
 
 /* Strap 1 Register */
