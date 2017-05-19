@@ -5,5 +5,5 @@
 # SPDX-License-Identifier:	GPL-2.0+
 #
 
-obj-y	= yosemite.o
+obj-y	= flyer3d.o
 extra-y	+= init.o

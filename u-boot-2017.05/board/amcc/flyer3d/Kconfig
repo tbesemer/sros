@@ -1,12 +1,12 @@
 if TARGET_YOSEMITE
 
 config SYS_BOARD
-	default "yosemite"
+	default "flyer3d"
 
 config SYS_VENDOR
 	default "amcc"
 
 config SYS_CONFIG_NAME
-	default "yosemite"
+	default "flyer3d"
 
 endif

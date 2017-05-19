@@ -1,7 +1,5 @@
-YOSEMITE BOARD
-M:	Stefan Roese <sr@denx.de>
+FLYER3D BOARD
+M:	Daniel Austin <daniel.austin@synrad.com>
 S:	Maintained
-F:	board/amcc/yosemite/
-F:	include/configs/yosemite.h
-F:	configs/yellowstone_defconfig
-F:	configs/yosemite_defconfig
+F:	board/amcc/flyer3d/
+F:	include/configs/flyer3d.h
