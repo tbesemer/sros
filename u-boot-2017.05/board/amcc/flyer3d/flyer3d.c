@@ -11,11 +11,17 @@
 #include <asm/io.h>
 #include <spd_sdram.h>
 #include <libfdt.h>
+#include <status_led.h>
+#include <asm/gpio.h>
 #include <fdt_support.h>
+
+#define BIT32(x)	   (1 << (31-x))
+#define TWOBIT32(x)        ((x>16)?(3 << 2*(31-x)):(3 << 2*(15-x)))
 
 DECLARE_GLOBAL_DATA_PTR;
 
 extern flash_info_t flash_info[CONFIG_SYS_MAX_FLASH_BANKS]; /* info for FLASH chips	*/
+extern void lxt971_no_sleep(void);
 
 static inline u32 get_async_pci_freq(void)
 {
@@ -25,6 +31,71 @@ static inline u32 get_async_pci_freq(void)
 	else
 		return 33333333;
 }
+
+#ifdef CONFIG_BOOT_SWITCH 
+void initBootSwitch(void)
+{
+    //gpio_config(CONFIG_SWITCH_BIT, GPIO_IN, 0,0);
+    //gpio_config(CONFIG_SWITCH_BIT1, GPIO_IN, 0,0);
+    gpio_config(CONFIG_SWITCH_BIT2, GPIO_IN, 0,0);
+    gpio_config(CONFIG_SWITCH_BIT3, GPIO_IN, 0,0);
+}
+
+int readBootSwitch(void)
+{
+    int ret = 0;
+    ret = gpio_read_in_bit(CONFIG_SWITCH_BIT2);
+    ret |= (gpio_read_in_bit(CONFIG_SWITCH_BIT3) << 1);
+    /*
+    ret = gpio_read_in_bit(CONFIG_SWITCH_BIT);
+    ret |= (gpio_read_in_bit(CONFIG_SWITCH_BIT1) << 1);
+    ret |= (gpio_read_in_bit(CONFIG_SWITCH_BIT2) << 3);
+    ret |= (gpio_read_in_bit(CONFIG_SWITCH_BIT3) << 2);
+    */
+    
+    return ret;
+}
+
+#endif
+void __led_init (led_id_t mask, int state)
+{
+    
+    int out_val;
+    out_val = (state == STATUS_LED_ON)?GPIO_OUT_1:GPIO_OUT_0;
+    gpio_config(mask, GPIO_OUT, 0,out_val);
+}
+
+void __led_set (led_id_t mask, int state)
+{
+    int out_val;
+    out_val = (state == STATUS_LED_ON)?GPIO_OUT_1:GPIO_OUT_0;
+    gpio_write_bit(mask, out_val);
+}
+
+void __led_toggle (led_id_t mask)
+{
+    if(gpio_read_out_bit(mask))
+       gpio_write_bit(mask, GPIO_OUT_0);
+    else
+	gpio_write_bit(mask, GPIO_OUT_1);
+    
+    
+}
+
+void CheckFlashReady(void)
+{
+    int fl1 = 0;
+    int fl2 = 0;
+    gpio_config(CONFIG_FLASH_BIT, GPIO_IN, 0,0);
+    gpio_config(CONFIG_FLASH_BIT1, GPIO_IN, 0,0);
+    //printf("Checking Flash pins...\n");
+    while (fl1==0 && fl2==0)
+    {
+	fl1 = gpio_read_in_bit(CONFIG_FLASH_BIT);
+	fl2 = (gpio_read_in_bit(CONFIG_FLASH_BIT1) << 1);
+    }
+}
+
 
 int board_early_init_f(void)
 {
@@ -44,6 +115,13 @@ int board_early_init_f(void)
 	/*setup Address lines for flash size 64Meg. */
 	out32(GPIO0_OSRL, in32(GPIO0_OSRL) | 0x50010000);
 	out32(GPIO0_TSRL, in32(GPIO0_TSRL) | 0x50010000);
+	
+	/* EBC (external bus controller) CS (chip select) Setup
+	 * Set up GPIO6-8 for CS1-3 respectively (page 699 PPC 440EP embedded manual) 
+	 * CS1:2x32MB memory, CS2:RTC, CS3:Xilinx */
+	out32(GPIO0_OSRL, in32(GPIO0_OSRL) | 0x54000);
+	out32(GPIO0_TSRL, in32(GPIO0_TSRL) | 0x54000);
+
 	out32(GPIO0_ISR1L, in32(GPIO0_ISR1L) | 0x50000000);
 
 	/*setup emac */
@@ -58,10 +136,11 @@ int board_early_init_f(void)
 	out32(GPIO1_OSRL, in32(GPIO1_OSRL) | 0x00080000);
 	out32(GPIO1_ISR2L, in32(GPIO1_ISR2L) | 0x00010000);
 
-	/* external interrupts IRQ0...3 */
-	out32(GPIO1_TCR, in32(GPIO1_TCR) & ~0x00f00000);
-	out32(GPIO1_TSRL, in32(GPIO1_TSRL) & ~0x0000ff00);
-	out32(GPIO1_ISR1L, in32(GPIO1_ISR1L) | 0x00005500);
+	/* external interrupts IRQ0...4 on GPIO 41-44
+	 * (page 701 PPC 440EP embedded manual) */
+	out32(GPIO1_TCR, in32(GPIO1_TCR) & ~0x00f80000);
+	out32(GPIO1_TSRL, in32(GPIO1_TSRL) & ~0x0000ffc0);
+	out32(GPIO1_ISR1L, in32(GPIO1_ISR1L) | 0x00005540);
 
 #ifdef CONFIG_440EP
 	/*setup USB 2.0 */
@@ -77,9 +156,10 @@ int board_early_init_f(void)
 	 *-------------------------------------------------------------------*/
 	mtdcr(UIC0SR, 0xffffffff);	/* clear all */
 	mtdcr(UIC0ER, 0x00000000);	/* disable all */
-	mtdcr(UIC0CR, 0x00000009);	/* ATI & UIC1 crit are critical */
+	/* IRQ5 is ETHIRQ interrupt, *level sensitive*, non-critical */
+	mtdcr(UIC0CR, 0x00000001);	/* ATI & UIC1 crit are critical, non-critical pg 239 */
 	mtdcr(UIC0PR, 0xfffffe13);	/* per ref-board manual */
-	mtdcr(UIC0TR, 0x01c00008);	/* per ref-board manual */
+	mtdcr(UIC0TR, 0x01c00000);	/* per ref-board manual, level sensitive pg 246 */
 	mtdcr(UIC0VR, 0x00000001);	/* int31 highest, base=0x000 */
 	mtdcr(UIC0SR, 0xffffffff);	/* clear all */
 
@@ -102,11 +182,11 @@ int board_early_init_f(void)
 	/* Check and reconfigure the PCI sync clock if necessary */
 	ppc4xx_pci_sync_clock_config(get_async_pci_freq());
 
+	/* Why are these commented out? */
 	/*clear tmrclk divisor */
-	*(unsigned char *)(CONFIG_SYS_BCSR_BASE | 0x04) = 0x00;
-
+	//*(unsigned char *)(CONFIG_SYS_BCSR_BASE | 0x04) = 0x00;
 	/*enable ethernet */
-	*(unsigned char *)(CONFIG_SYS_BCSR_BASE | 0x08) = 0xf0;
+	//*(unsigned char *)(CONFIG_SYS_BCSR_BASE | 0x08) = 0xf0;
 
 #ifdef CONFIG_440EP
 	/*enable usb 1.1 fs device and remove usb 2.0 reset */
@@ -115,6 +195,14 @@ int board_early_init_f(void)
 
 	/*get rid of flash write protect */
 	*(unsigned char *)(CONFIG_SYS_BCSR_BASE | 0x07) = 0x00;
+	
+	// Immediately drive the pullup line low so that USB device does not enumerate on powerup
+	out32(GPIO1_OSRL, in32(GPIO1_OSRL) & ~ TWOBIT32(1));
+	out32(GPIO1_TSRL, in32(GPIO1_TSRL) & ~ TWOBIT32(1));
+	out32(GPIO1_ODR, in32(GPIO1_ODR) | BIT32(1));
+	out32(GPIO1_TCR, in32(GPIO1_TCR) | BIT32(1));
+	out32(GPIO1_OR, in32(GPIO1_OR) & ~ BIT32(1));
+	
 
 	return 0;
 }
@@ -161,9 +249,10 @@ int misc_init_r (void)
 	gd->bd->bi_flashstart = 0 - gd->bd->bi_flashsize;
 	gd->bd->bi_flashoffset = 0;
 
-	/* Monitor protection ON by default */
-	(void)flash_protect(FLAG_PROTECT_SET,
-			    -CONFIG_SYS_MONITOR_LEN,
+	/* Monitor protection OFF? by default
+	 * Covers u-boot environment and u-boot executable? */
+	(void)flash_protect(FLAG_PROTECT_CLEAR,
+			   0xfff60000,
 			    0xffffffff,
 			    &flash_info[0]);
 
@@ -178,7 +267,7 @@ int checkboard(void)
 	u32 clock = get_async_pci_freq();
 
 #ifdef CONFIG_440EP
-	printf("Board: Yosemite - AMCC PPC440EP Evaluation Board");
+	printf("Board: Flyer3D - AMCC PPC440EP Marking Head");
 #else
 	printf("Board: Yellowstone - AMCC PPC440GR Evaluation Board");
 #endif
@@ -310,14 +399,13 @@ int dram_init(void)
 	/*
 	 * Following for CAS Latency = 2.5 @ 133 MHz PLB
 	 */
-	mtsdram(SDRAM0_B0CR, 0x000a4001);	/* SDBA=0x000 128MB, Mode 3, enabled */
-	mtsdram(SDRAM0_B1CR, 0x080a4001);	/* SDBA=0x080 128MB, Mode 3, enabled */
+	mtsdram(SDRAM0_B0CR, 0x00084001);	/* SDBA=0x000 64MB, Mode 3, enabled, pg 325 */
 
 	mtsdram(SDRAM0_TR0, 0x410a4012);	/* ?? */
 	mtsdram(SDRAM0_RTR, 0x04080000);	/* ?? */
 	mtsdram(SDRAM0_CFG1, 0x00000000);	/* Self-refresh exit, disable PM    */
 	mtsdram(SDRAM0_CFG0, 0x30000000);	/* Disable EEC */
-	udelay(400);		/* Delay 200 usecs (min)            */
+	udelay(800);		/* Delay 200 usecs (min)            */
 
 	/*--------------------------------------------------------------------
 	 * Enable the controller, then wait for DCEN to complete
@@ -331,8 +419,7 @@ int dram_init(void)
 	}
 
 	sdram_tr1_set(0x00000000, &tr1_bank1);
-	sdram_tr1_set(0x08000000, &tr1_bank2);
-	mtsdram(SDRAM0_TR1, (((tr1_bank1+tr1_bank2)/2) | 0x80800800));
+	mtsdram(SDRAM0_TR1, tr1_bank1 | 0x80800800);
 
 	gd->ram_size = CONFIG_SYS_SDRAM_BANKS *
 		(CONFIG_SYS_KBYTES_SDRAM * 1024);	/* set bytes */
@@ -353,8 +440,19 @@ void hw_watchdog_reset(void)
 }
 #endif
 
+void reset_phy(void)
+{
+#ifdef CONFIG_LXT971_NO_SLEEP
+	/*
+	 * Disable sleep mode in LXT971
+	 */
+	lxt971_no_sleep();
+#endif
+}
+
 void board_reset(void)
 {
 	/* give reset to BCSR */
-	*(unsigned char *)(CONFIG_SYS_BCSR_BASE | 0x06) = 0x09;
+	// Why is this commented out?
+	//*(unsigned char *)(CONFIG_SYS_BCSR_BASE | 0x06) = 0x09;
 }
