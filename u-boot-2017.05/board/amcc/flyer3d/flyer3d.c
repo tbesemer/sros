@@ -209,10 +209,11 @@ int board_early_init_f(void)
 
 int misc_init_r (void)
 {
+	/* Why is this commented out?
 	uint pbcr;
 	int size_val = 0;
 
-	/* Re-do sizing to get full correct info */
+	// Re-do sizing to get full correct info
 	mtdcr(EBC0_CFGADDR, PB0CR);
 	pbcr = mfdcr(EBC0_CFGDATA);
 	switch (gd->bd->bi_flashsize) {
@@ -244,7 +245,7 @@ int misc_init_r (void)
 	pbcr = (pbcr & 0x0001ffff) | gd->bd->bi_flashstart | (size_val << 17);
 	mtdcr(EBC0_CFGADDR, PB0CR);
 	mtdcr(EBC0_CFGDATA, pbcr);
-
+	*/
 	/* adjust flash start and offset */
 	gd->bd->bi_flashstart = 0 - gd->bd->bi_flashsize;
 	gd->bd->bi_flashoffset = 0;
