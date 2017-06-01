@@ -1,4 +1,4 @@
-if TARGET_YOSEMITE
+if TARGET_FLYER3D
 
 config SYS_BOARD
 	default "flyer3d"

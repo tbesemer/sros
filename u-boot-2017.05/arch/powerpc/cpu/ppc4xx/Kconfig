@@ -53,6 +53,9 @@ config TARGET_WALNUT
 config TARGET_YOSEMITE
 	bool "Support yosemite"
 
+config TARGET_FLYER3D
+	bool "Support Flyer3D"
+
 config TARGET_YUCCA
 	bool "Support yucca"
 
@@ -149,6 +152,7 @@ source "board/amcc/redwood/Kconfig"
 source "board/amcc/sequoia/Kconfig"
 source "board/amcc/walnut/Kconfig"
 source "board/amcc/yosemite/Kconfig"
+source "board/amcc/flyer3d/Kconfig"
 source "board/amcc/yucca/Kconfig"
 source "board/esd/cpci2dp/Kconfig"
 source "board/esd/cpci405/Kconfig"

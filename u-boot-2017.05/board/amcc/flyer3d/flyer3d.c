@@ -12,7 +12,7 @@
 #include <spd_sdram.h>
 #include <libfdt.h>
 #include <status_led.h>
-#include <asm/gpio.h>
+#include <asm/ppc4xx-gpio.h>
 #include <fdt_support.h>
 
 #define BIT32(x)	   (1 << (31-x))
@@ -60,25 +60,25 @@ int readBootSwitch(void)
 void __led_init (led_id_t mask, int state)
 {
     
-    int out_val;
-    out_val = (state == STATUS_LED_ON)?GPIO_OUT_1:GPIO_OUT_0;
-    gpio_config(mask, GPIO_OUT, 0,out_val);
+    //int out_val;
+    //out_val = (state == STATUS_LED_ACTIVE)?GPIO_OUT_1:GPIO_OUT_0;
+    //gpio_config(mask, GPIO_OUT, 0,out_val);
 }
 
 void __led_set (led_id_t mask, int state)
 {
-    int out_val;
-    out_val = (state == STATUS_LED_ON)?GPIO_OUT_1:GPIO_OUT_0;
-    gpio_write_bit(mask, out_val);
+    //int out_val;
+    //out_val = (state == STATUS_LED_ACTIVE)?GPIO_OUT_1:GPIO_OUT_0;
+    //gpio_write_bit(mask, out_val);
 }
 
 void __led_toggle (led_id_t mask)
 {
-    if(gpio_read_out_bit(mask))
-       gpio_write_bit(mask, GPIO_OUT_0);
-    else
-	gpio_write_bit(mask, GPIO_OUT_1);
-    
+    //if(gpio_read_out_bit(mask))
+       //gpio_write_bit(mask, GPIO_OUT_0);
+    //else
+	//gpio_write_bit(mask, GPIO_OUT_1);
+    //
     
 }
 
@@ -379,7 +379,7 @@ void sdram_tr1_set(int ram_address, int* tr1_value)
 int dram_init(void)
 {
 	register uint reg;
-	int tr1_bank1, tr1_bank2;
+	int tr1_bank1;
 
 	/*--------------------------------------------------------------------
 	 * Setup some default

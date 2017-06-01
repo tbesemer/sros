@@ -6,4 +6,4 @@
 #
 
 obj-y	= flyer3d.o
-extra-y	+= init.o
+extra-y	+= init.o ../common/misc.o
