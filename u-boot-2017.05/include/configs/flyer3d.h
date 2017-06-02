@@ -88,7 +88,6 @@
 #define CONFIG_FLASH_CFI_DRIVER			/* Use common CFI driver	*/
 #define CONFIG_SYS_FLASH_CFI_AMD_RESET 1		/* AMD RESET for STM 29W320DB!	*/
 #define CONFIG_SYS_FLASH		CONFIG_SYS_FLASH_BASE
-#define CONFIG_SYS_FLASH2		0xfc000000
 #define CONFIG_SYS_FLASH_BANKS_LIST {CONFIG_SYS_FLASH, CONFIG_SYS_FLASH2}
 
 
@@ -127,7 +126,6 @@
  *----------------------------------------------------------------------*/
 #define CONFIG_SYS_I2C_PPC4XX_SPEED_0		400000
 
-#define CONFIG_SYS_I2C_MULTI_EEPROMS
 #define CONFIG_SYS_I2C_EEPROM_ADDR	(0xa8>>1)
 #define CONFIG_SYS_I2C_EEPROM_ADDR_LEN 1
 #define CONFIG_SYS_EEPROM_PAGE_WRITE_BITS 3
@@ -163,19 +161,6 @@
 #define CONFIG_RESET_PHY_R	1	/* use reset_phy() this enables LXT971 no sleep and sets up LXT971 LEDs*/
 #define CONFIG_PHY_ADDR		0	/* PHY address config for port 0			*/
 #define CONFIG_LXT971_NO_SLEEP  1       /* disable sleep mode in LXT971 */
-
-/*-----------------------------------------------------------------------
- * Definitions for boot switch
- */
-#define CONFIG_SWITCH_BIT		3
-#define CONFIG_SWITCH_BIT1              4
-#define CONFIG_SWITCH_BIT2		38
-#define CONFIG_SWITCH_BIT3              37
-/*-----------------------------------------------------------------------
- * Definitions for flash check
- */
-#define CONFIG_FLASH_BIT		9
-#define CONFIG_FLASH_BIT1               10
 
 /*-----------------------------------------------------------------------
  * Definitions for status LED
@@ -249,8 +234,7 @@
  *-----------------------------------------------------------------------
  */
 /* General PCI */
-#undef  CONFIG_PCI_INDIRECT_BRIDGE	/* indirect PCI bridge support */
-#undef  CONFIG_PCI_PNP			/* do (not) pci plug-and-play   */
+#define CONFIG_PCI_INDIRECT_BRIDGE	/* indirect PCI bridge support */
 #define CONFIG_PCI_SCAN_SHOW            /* show pci devices on startup  */
 #define CONFIG_SYS_PCI_TARGBASE        0x80000000 /* PCIaddr mapped to CONFIG_SYS_PCI_MEMBASE*/
 
@@ -265,7 +249,6 @@
  * External Bus Controller (EBC) Setup
  *----------------------------------------------------------------------*/
 #define CONFIG_SYS_CPLD		0xfb000000
-#define CONFIG_SYS_RTC		0xfb100000
 
 /* Memory Bank 0 (NOR-FLASH) initialization					*/
 #define CONFIG_SYS_EBC_PB0AP		0x03017200
