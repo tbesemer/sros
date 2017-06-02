@@ -46,9 +46,9 @@ buildroot_clean:
 .PHONY: kernel
 kernel:
 	make -C ${KERNEL_BASE} V=1 ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} uImage
-	make -C ${KERNEL_BASE} V=1 ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} yosemite.dtb
+	make -C ${KERNEL_BASE} V=1 ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} flyer3d.dtb
 	cp -p ${KERNEL_BASE}/arch/powerpc/boot/uImage ${SROS_ROOT}/output/uImage
-	cp -p ${KERNEL_BASE}/arch/powerpc/boot/yosemite.dtb ${SROS_ROOT}/output/yosemite.dtb
+	cp -p ${KERNEL_BASE}/arch/powerpc/boot/yosemite.dtb ${SROS_ROOT}/output/flyer3d.dtb
 
 .PHONY: kernel_defconfig
 kernel_defconfig:
