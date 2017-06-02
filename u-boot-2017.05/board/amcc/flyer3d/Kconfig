@@ -39,5 +39,8 @@ config SYS_I2C_MULTI_EEPROMS
 config SYS_RTC
 	hex 
 	default 0xfb100000
+config PHY_MII
+	bool
+	default y
 
 endif

@@ -179,8 +179,10 @@ int board_early_init_f(void)
 	mtsdr(SDR0_PFC0, 0x00003e00);	/* Pin function */
 	mtsdr(SDR0_PFC1, 0x00048000);	/* Pin function: UART0 has 4 pins */
 
+#ifdef CONFIG_PCI
 	/* Check and reconfigure the PCI sync clock if necessary */
 	ppc4xx_pci_sync_clock_config(get_async_pci_freq());
+#endif
 
 	/* Why are these commented out? */
 	/*clear tmrclk divisor */
@@ -282,6 +284,7 @@ int checkboard(void)
 	}
 	putc('\n');
 
+#ifdef CONFIG_PCI
 	/*
 	 * Reconfiguration of the PCI sync clock is already done,
 	 * now check again if everything is in range:
@@ -290,7 +293,7 @@ int checkboard(void)
 		printf("ERROR: PCI clocking incorrect (async=%d "
 		       "sync=%ld)!\n", clock, get_PCI_freq());
 	}
-
+#endif
 	return (0);
 }
 

@@ -155,6 +155,7 @@
 	CONFIG_AMCC_DEF_ENV_NOR_UPD					\
 	"kernel_addr=fc000000\0"					\
 	"ramdisk_addr=fc180000\0"					\
+	"ethaddr=00:10:ec:00:e2:ac\0"					\
 	""
 
 #define CONFIG_HAS_ETH0		1	/* add support for "ethaddr"	*/

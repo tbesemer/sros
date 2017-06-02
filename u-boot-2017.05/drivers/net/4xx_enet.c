@@ -934,7 +934,12 @@ static int ppc_4xx_eth_init (struct eth_device *dev, bd_t * bis)
 	udelay (100);
 
 #if defined(CONFIG_440GP) || defined(CONFIG_440EP) || defined(CONFIG_440GR)
+#ifdef CONFIG_PHY_MII
+	/* Use MII interface, not RMII.  Page 591 of 440EP embedded manual */
+	out_be32((void *)ZMII0_FER, (ZMII_FER_MII | ZMII_FER_MDI) << ZMII_FER_V (devnum));
+#else
 	out_be32((void *)ZMII0_FER, (ZMII_FER_RMII | ZMII_FER_MDI) << ZMII_FER_V (devnum));
+#endif
 #elif defined(CONFIG_440GX) || \
     defined(CONFIG_440EPX) || defined(CONFIG_440GRX) || \
     defined(CONFIG_460EX) || defined(CONFIG_460GT)
