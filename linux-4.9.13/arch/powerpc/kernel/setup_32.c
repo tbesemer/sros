@@ -105,21 +105,8 @@ notrace unsigned long __init early_init(unsigned long dt_ptr)
 extern unsigned int memset_nocache_branch; /* Insn to be replaced by NOP */
 
 
-static char *tom_thr = (char *)0xEF600300;
-static char *tom_lsr = (char *)0xEF600305;
-
-void __init tom_serial( char c )
-{
-    while( !(*tom_lsr & 0x04) );
-    *tom_thr = c;
-}
-
 notrace void __init machine_init(u64 dt_ptr)
 {
-	for( ;; ) {
-	    tom_serial( '5' );
-	}
-
 	/* Configure static keys first, now that we're relocated. */
 	setup_feature_keys();
 

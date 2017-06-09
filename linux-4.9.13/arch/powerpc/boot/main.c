@@ -76,8 +76,8 @@ static struct addr_range prep_kernel(void)
 
 	if (uncompressed_image) {
 		memcpy(addr, vmlinuz_addr + ei.elfoffset, ei.loadsize);
-		printf("0x%lx bytes of uncompressed data copied\n\r",
-		       ei.loadsize);
+		printf("0x%lx bytes of uncompressed data copied from 0x%p to 0x%p\n\r",
+		       ei.loadsize, vmlinuz_addr + ei.elfoffset, addr);
 		goto out;
 	}
 
@@ -234,9 +234,15 @@ void start(void)
 	kentry = (kernel_entry_t) vmlinux.addr;
 	if (ft_addr) {
 		if(platform_ops.kentry)
+		{
+			printf("Platform ops kentry addr 0x%lx\n\r", platform_ops.kentry);
 			platform_ops.kentry(ft_addr, vmlinux.addr);
+		}
 		else
+		{
+			printf("kentry addr 0x%lx\n\r", kentry);
 			kentry(ft_addr, 0, NULL);
+		}
 	}
 	else
 		kentry((unsigned long)initrd.addr, initrd.size,

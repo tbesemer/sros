@@ -13,8 +13,8 @@
 / {
 	#address-cells = <2>;
 	#size-cells = <1>;
-	model = "synrad,flyer3d";
-	compatible = "synrad,flyer3d", "amcc,yosemite";
+	model = "Synrad Flyer 3D";
+	compatible = "amcc,flyer3d", "synrad,flyer3d", "amcc,yosemite";
 	dcr-parent = <&{/cpus/cpu@0}>;
 
 	aliases {
