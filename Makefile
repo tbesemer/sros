@@ -79,6 +79,10 @@ uboot:
 	make -C ${UBOOT_BASE} CROSS_COMPILE=${TOOLCHAIN_PREFIX} V=1 
 	cp -p ${UBOOT_BASE}/u-boot.bin ${SROS_ROOT}/output/u-boot.bin
 
+.PHONY: uboot_saveconfig
+uboot_saveconfig:
+	cp -p ${UBOOT_BASE}/.config ${SROS_ROOT}/config/sros_uboot_config 
+
 .PHONY: help
 help:
 	@ less README_help.txt
