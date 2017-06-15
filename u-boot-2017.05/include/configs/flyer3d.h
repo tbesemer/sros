@@ -156,6 +156,8 @@
 	"kernel_addr=fc000000\0"					\
 	"ramdisk_addr=fc180000\0"					\
 	"ethaddr=00:10:ec:00:e2:ac\0"					\
+	"install_kernel=dhcp;setenv serverip 172.28.168.50;tftp 2000000 DEV/output/cuImage.yosemite\0" \
+	"boot_kernel=bootm 2000000\0" \
 	""
 
 #define CONFIG_HAS_ETH0		1	/* add support for "ethaddr"	*/

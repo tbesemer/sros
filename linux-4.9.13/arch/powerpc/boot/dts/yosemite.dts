@@ -262,7 +262,7 @@
 				max-frame-size = <1500>;
 				rx-fifo-size = <4096>;
 				tx-fifo-size = <2048>;
-				phy-mode = "rmii";
+				phy-mode = "mii";
 				phy-map = <0x00000000>;
 				zmii-device = <&ZMII0>;
 				zmii-channel = <0>;
@@ -286,6 +286,7 @@
 				phy-map = <0x00000000>;
 				zmii-device = <&ZMII0>;
 				zmii-channel = <1>;
+				status = "disabled";
 			};
 
 			usb@ef601000 {
