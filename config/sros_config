@@ -1,6 +1,6 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Buildroot 2017.02.2-g1d886c5-dirty Configuration
+# Buildroot 2017.02.2-g8e309a7 Configuration
 #
 BR2_HAVE_DOT_CONFIG=y
 BR2_HOST_GCC_AT_LEAST_4_5=y
@@ -890,7 +890,7 @@ BR2_PACKAGE_OPENAL_ARCH_SUPPORTS=y
 # BR2_PACKAGE_MINIZIP is not set
 # BR2_PACKAGE_SNAPPY is not set
 # BR2_PACKAGE_SZIP is not set
-# BR2_PACKAGE_ZLIB is not set
+BR2_PACKAGE_ZLIB=y
 
 #
 # Crypto
