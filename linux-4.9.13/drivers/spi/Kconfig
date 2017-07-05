@@ -763,4 +763,10 @@ endif # SPI_MASTER
 
 # (slave support would go here)
 
+config SPI_SYNRAD_LINK
+	tristate "Synrad Mosaic SPI driver"
+	depends on SPI_MASTER
+	help
+	  An SPI driver to control the servos for Mosaic
+
 endif # SPI

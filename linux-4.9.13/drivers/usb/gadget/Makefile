@@ -10,3 +10,6 @@ libcomposite-y			:= usbstring.o config.o epautoconf.o
 libcomposite-y			+= composite.o functions.o configfs.o u_f.o
 
 obj-$(CONFIG_USB_GADGET)	+= udc/ function/ legacy/
+
+g_Flyer_usb-objs		:= Flyer_usb.o usbstring.o config.o epautoconf.o
+obj-$(CONFIG_USB_G_FLYER)	+= g_Flyer_usb.o
