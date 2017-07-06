@@ -55,7 +55,6 @@
 #include <linux/ioport.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
-#include <linux/smp_lock.h>
 #include <linux/errno.h>
 #include <linux/init.h>
 #include <linux/timer.h>
@@ -72,7 +71,6 @@
 #include <asm/byteorder.h>
 #include <asm/io.h>
 #include <asm/irq.h>
-#include <asm/system.h>
 #include <asm/unaligned.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
@@ -112,7 +110,7 @@ static ssize_t at91_flyer_read(struct file* file, char* buf, size_t count, loff_
 static ssize_t at91_flyer_write(struct file* file, const char* buf, size_t count, loff_t *offset);
 static int     at91_flyer_open(struct inode* inode, struct file* file);
 static int     at91_flyer_release(struct inode* inode, struct file* file);
-static int     at91_flyer_ioctl(struct inode* inode, struct file* file, unsigned int cmd, unsigned long arg);
+static long     at91_flyer_ioctl(struct file* file, unsigned int cmd, unsigned long arg);
 static unsigned int at91_flyer_poll(struct file* file, poll_table* wait);
 /* circular buffer */
 struct gs_buf {
@@ -217,8 +215,6 @@ struct flyer_dev {
 
 #define ERROR(dev,fmt,args...) \
 	xprintk(dev , KERN_ERR , fmt , ## args)
-#define WARN(dev,fmt,args...) \
-	xprintk(dev , KERN_WARNING , fmt , ## args)
 #define INFO(dev,fmt,args...) \
 	xprintk(dev , KERN_INFO , fmt , ## args)
 
@@ -713,17 +709,10 @@ static int set_flyer_config (struct flyer_dev *dev, int gfp_flags)
 
 	gadget_for_each_ep (ep, gadget) 
 	{
-		const struct usb_endpoint_descriptor	*d;
-
 		/* two endpoints write to the host */
 		if (strcmp (ep->name, EP_IN_MAIN_NAME) == 0) 
 		{
-		#ifdef	CONFIG_USB_GADGET_DUALSPEED
-		    d = ep_desc (gadget, &hs_source_main_desc, &fs_source_main_desc);
-		#else
-		    d = ep_desc (gadget, NULL, &fs_source_main_desc);
-		#endif
-		    result = usb_ep_enable (ep, d);
+		    result = usb_ep_enable (ep);
 		    if (result == 0) 
 		    {
 			ep->driver_data = dev;
@@ -733,12 +722,7 @@ static int set_flyer_config (struct flyer_dev *dev, int gfp_flags)
 		}
 		else if (strcmp (ep->name, EP_IN_URGENT_NAME) == 0) 
 		{
-		#ifdef	CONFIG_USB_GADGET_DUALSPEED
-		    d = ep_desc (gadget, &hs_source_urgent_desc, &fs_source_urgent_desc);
-		#else
-		    d = ep_desc (gadget, NULL, &fs_source_urgent_desc);
-		#endif
-		    result = usb_ep_enable (ep, d);
+		    result = usb_ep_enable (ep);
 		    if (result == 0) 
 		    {
 			ep->driver_data = dev;
@@ -751,12 +735,7 @@ static int set_flyer_config (struct flyer_dev *dev, int gfp_flags)
 		
 		else if (strcmp (ep->name, EP_OUT_MAIN_NAME) == 0) 
 		{
-		#ifdef	CONFIG_USB_GADGET_DUALSPEED
-		    d = ep_desc (gadget, &hs_sink_main_desc, &fs_sink_main_desc);
-		#else
-		    d = ep_desc (gadget, NULL, &fs_sink_main_desc);
-		#endif
-		    result = usb_ep_enable (ep, d);
+		    result = usb_ep_enable (ep);
 		    if (result == 0) 
 		    {
 			ep->driver_data = dev;
@@ -770,12 +749,7 @@ static int set_flyer_config (struct flyer_dev *dev, int gfp_flags)
 		} 
 		else if (strcmp (ep->name, EP_OUT_URGENT_NAME) == 0) 
 		{
-		#ifdef	CONFIG_USB_GADGET_DUALSPEED
-		    d = ep_desc (gadget, &hs_sink_urgent_desc, &fs_sink_urgent_desc);
-		#else
-		    d = ep_desc (gadget, NULL, &fs_sink_urgent_desc);
-		#endif
-		    result = usb_ep_enable (ep, d);
+		    result = usb_ep_enable (ep);
 		    if (result == 0) 
 		    {
 			ep->driver_data = dev;
@@ -1210,7 +1184,7 @@ flyer_unbind (struct usb_gadget *gadget)
 }
 
 static int
-flyer_bind (struct usb_gadget *gadget)
+flyer_bind (struct usb_gadget *gadget, struct usb_gadget_driver* driver)
 {
     struct usb_endpoint_descriptor* ued[4] = {&fs_source_main_desc,&fs_sink_main_desc,&fs_source_urgent_desc,
 					      &fs_sink_urgent_desc};
@@ -1359,7 +1333,7 @@ flyer_resume (struct usb_gadget *gadget)
 	struct flyer_dev		*dev = get_gadget_data (gadget);
 	DBG (dev, "resume\n");
 	del_timer (&dev->resume);
-	flyer_bind(gadget);
+	flyer_bind(gadget, NULL);
 }
 
 
@@ -1367,9 +1341,9 @@ flyer_resume (struct usb_gadget *gadget)
 
 static struct usb_gadget_driver flyer_driver = {
 #ifdef CONFIG_USB_GADGET_DUALSPEED
-	.speed		= USB_SPEED_HIGH,
+	.max_speed	= USB_SPEED_HIGH,
 #else
-	.speed		= USB_SPEED_FULL,
+	.max_speed	= USB_SPEED_FULL,
 #endif
 	.function	= (char *) longname,
 	.bind		= flyer_bind,
@@ -1391,7 +1365,7 @@ static struct file_operations flyer_fops = {
 owner:		THIS_MODULE,
 read:		at91_flyer_read,
 write:		at91_flyer_write,
-ioctl:		at91_flyer_ioctl,
+unlocked_ioctl:	at91_flyer_ioctl,
 open:		at91_flyer_open,
 release:	at91_flyer_release,
 poll:		at91_flyer_poll
@@ -1612,7 +1586,7 @@ static int at91_flyer_release(struct inode* inode, struct file* file)
     return 0;
 }
 
-static int at91_flyer_ioctl(struct inode* inode, struct file* file, unsigned int cmd, unsigned long arg)
+static long at91_flyer_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
 {
     int iArg;
     /* Make sure the command belongs to us*/
@@ -1936,7 +1910,7 @@ static int proc_flyer_show(struct seq_file *s, void *unused)
 
 static int proc_flyer_open(struct inode *inode, struct file *file)
 {
-    return single_open(file, proc_flyer_show, PDE(inode)->data);
+    return single_open(file, proc_flyer_show, inode);
 }
 
 static struct file_operations proc_ops = {
@@ -1948,10 +1922,7 @@ static struct file_operations proc_ops = {
 
 static void create_debug_file(void)
 {    
-    g_flyer_pde = create_proc_entry (debug_filename, 0, NULL);
-    if (g_flyer_pde == NULL)
-	return;    
-    g_flyer_pde->proc_fops = &proc_ops;
+    g_flyer_pde = proc_create (debug_filename, 0, NULL, &proc_ops);
 }
 
 static void remove_debug_file(void)
@@ -1975,7 +1946,7 @@ static int __init init (void)
     // All this for the bloody serial number!
     void *pci_reg_base;
     int serialnum;
-    pci_reg_base = ioremap64(FLYER_PCIL0_BASE, FLYER_PCIL0_SIZE);   
+    pci_reg_base = ioremap(FLYER_PCIL0_BASE, FLYER_PCIL0_SIZE);   
     serialnum = (int)PCI_READL(FLYER_PCIL0_PMM0PCIHA);
     sprintf (serial, "%09d", serialnum);
     iounmap(pci_reg_base);
@@ -1989,7 +1960,7 @@ static int __init init (void)
     }
     else
     {
-	char_ret = usb_gadget_register_driver(&flyer_driver);
+	char_ret = usb_gadget_probe_driver(&flyer_driver);
 	if (char_ret)
 	{
 	    unregister_chrdev(FLYER_MAJOR,shortname);

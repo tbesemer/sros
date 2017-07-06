@@ -460,6 +460,8 @@ struct emac_ethtool_regs_subhdr {
 	u32 index;
 };
 
+extern int g_bEthConnected;
+
 #define EMAC_ETHTOOL_REGS_VER		3
 #define EMAC4_ETHTOOL_REGS_VER		4
 #define EMAC4SYNC_ETHTOOL_REGS_VER	5

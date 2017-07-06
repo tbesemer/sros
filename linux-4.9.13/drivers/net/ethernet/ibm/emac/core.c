@@ -74,10 +74,13 @@
 #define DRV_VERSION     "3.54"
 #define DRV_DESC        "PPC 4xx OCP EMAC driver"
 
+EXPORT_SYMBOL(g_bEthConnected);
 MODULE_DESCRIPTION(DRV_DESC);
 MODULE_AUTHOR
     ("Eugene Surovegin <eugene.surovegin@zultys.com> or <ebs@ebshome.net>");
 MODULE_LICENSE("GPL");
+
+int g_bEthConnected = 0;
 
 /* minimum number of free TX descriptors required to wake up TX process */
 #define EMAC_TX_WAKEUP_THRESH		(NUM_TX_BUFF / 4)
@@ -1225,18 +1228,22 @@ static int emac_open(struct net_device *ndev)
 			dev->phy.def->ops->read_link(&dev->phy);
 			emac_rx_clk_default(dev);
 			netif_carrier_on(dev->ndev);
+			g_bEthConnected = 1;
 			link_poll_interval = PHY_POLL_LINK_ON;
 		} else {
 			emac_rx_clk_tx(dev);
 			netif_carrier_off(dev->ndev);
+			g_bEthConnected = 0;
 			link_poll_interval = PHY_POLL_LINK_OFF;
 		}
 		dev->link_polling = 1;
 		wmb();
 		schedule_delayed_work(&dev->link_work, link_poll_interval);
 		emac_print_link_status(dev);
-	} else
+	} else {
 		netif_carrier_on(dev->ndev);
+		g_bEthConnected = 1;
+	}
 
 	/* Required for Pause packet support in EMAC */
 	dev_mc_add_global(ndev, default_mcast_addr);
@@ -1316,6 +1323,7 @@ static void emac_link_timer(struct work_struct *work)
 			emac_netif_stop(dev);
 			emac_full_tx_reset(dev);
 			emac_netif_start(dev);
+			g_bEthConnected = 1;
 			emac_print_link_status(dev);
 		}
 		link_poll_interval = PHY_POLL_LINK_ON;
@@ -1325,6 +1333,7 @@ static void emac_link_timer(struct work_struct *work)
 			netif_carrier_off(dev->ndev);
 			netif_tx_disable(dev->ndev);
 			emac_reinitialize(dev);
+			g_bEthConnected = 0;
 			emac_print_link_status(dev);
 		}
 		link_poll_interval = PHY_POLL_LINK_OFF;
@@ -1337,6 +1346,7 @@ static void emac_link_timer(struct work_struct *work)
 static void emac_force_link_update(struct emac_instance *dev)
 {
 	netif_carrier_off(dev->ndev);
+	g_bEthConnected = 0;
 	smp_rmb();
 	if (dev->link_polling) {
 		cancel_delayed_work_sync(&dev->link_work);
@@ -2892,6 +2902,7 @@ static int emac_probe(struct platform_device *ofdev)
 	ndev->ethtool_ops = &emac_ethtool_ops;
 
 	netif_carrier_off(ndev);
+	g_bEthConnected = 0;
 
 	err = register_netdev(ndev);
 	if (err) {
