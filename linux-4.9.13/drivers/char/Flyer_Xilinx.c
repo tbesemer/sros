@@ -28,12 +28,14 @@
 #include <linux/ioctl.h>
 #include <linux/interrupt.h>
 #include <linux/completion.h>
+#include <linux/slab.h>
 #include <asm/io.h>
 #include <asm/uaccess.h>
 #include <asm/Flyer_Xilinx.h>
 #include <asm/FlyerII.h>
-#include <asm/ocp.h>
-#include <asm/ibm4xx.h>
+#include <linux/of_device.h>
+#include <linux/of_platform.h>
+#include <linux/fs.h>
 
 #define XILINX_VERSION "1.0"
 
@@ -117,6 +119,7 @@ void* xil_addr_base = NULL;
 DECLARE_WAIT_QUEUE_HEAD(io_queue);
 DECLARE_WAIT_QUEUE_HEAD(track_queue);
 
+static u32 opb_freq;
 static irqreturn_t flyer_xil_interrupt(int irq, void *dev_id);
 static irqreturn_t flyer_xil_status_led_interrupt(int irq, void *dev_id);
 static irqreturn_t flyer_xil_encoder_interrupt(int irq, void *dev_id);
@@ -176,7 +179,7 @@ int tracking=0;
 int enable_part_interrupt = 0;
 int marking_testmark = 0;
 int waitIOSuccess = 0;
-pid_t main_pid = 0;
+struct pid* main_pid = NULL;
 int temp_status = 0;
 unsigned short enc_cfg = 0;
 //unsigned short enable_main_interrupts = 0;
@@ -331,17 +334,11 @@ void init_gpio(void)
 
 void setup_status_timer(u32 freq)
 {
-    u32 opb_freq;
     u32 timercounts;
     u32 comparemask;
     u32 interruptmask;
     u32 interruptenable;
   
-    /* get the clock (Hz) for the OPB. Set in flyer_setup_arch() */
-    opb_freq = ocp_sys_info.opb_bus_freq;
-    //printk("\nopb_freq = %d\n",opb_freq);
-    //printk("\nfreq = %d\n",freq);
-    
     timercounts = opb_freq/freq;
     //comparemask = 0xFF << 7;
     comparemask = 0xFE000000;
@@ -377,10 +374,7 @@ void setup_status_timer(u32 freq)
 
 void setup_encoder_timer(u32 timercounts)
 {
-    u32 reg;
     //printk("\ntimercounts = %d\n",timercounts); 
-    u32 opb_freq;
-    u32 comparemask;
     u32 interruptmask;
     u32 interruptenable;
   
@@ -398,13 +392,9 @@ void setup_encoder_timer(u32 timercounts)
     else
     {
 	timercounts = timercounts*2;
-	//timercounts = 13333;
-	//timercounts = 0x400;
-	//comparemask = 0x400;
     // Load the compare register
 	pGPT_COMP->comp1 = timercounts;
     // Load up the compare mask
-	//pGPT_MASK->mask1 = 0xFFFFFEFF;
 	pGPT_MASK->mask1 = ~timercounts;
     //Unmask the interrupt
 	
@@ -449,7 +439,7 @@ int flyer_xil_program_init(void)
 int flyer_xil_program_done(void)
 {
     int start = jiffies;
-    while ( (!pGPIO0->ir & XILINX_DONE) && ((jiffies - start) < XIL_DONE_DELAY) );
+    while ( (!(pGPIO0->ir & XILINX_DONE)) && ((jiffies - start) < XIL_DONE_DELAY) );
     
     if ( (jiffies - start) >= XIL_DONE_DELAY)
 	return 0;//timed out
@@ -641,7 +631,7 @@ static irqreturn_t flyer_xil_status_led_interrupt(int irq, void *dev_id)
 		pGPT_INT->ie &= ~BIT32(16);		
 		// Toggle the LED
 		curfreq = newfreq;
-		newcount = (ocp_sys_info.opb_bus_freq)/newfreq;
+		newcount = opb_freq/newfreq;
 		pGPT_COMP->comp0 = newcount;
 		if(newcolor != curcolor)
 		    toggle?(ledcolor=newcolor):(ledcolor=None);
@@ -669,7 +659,6 @@ static irqreturn_t flyer_xil_encoder_interrupt(int irq, void *dev_id)
     
     u32 encstatus = 0;
     u32 ledstatus = 0;
-    u32 reg = 0;
     encstatus = *pGPT_DCIS;
     encstatus &= BIT32(0);   
     ledstatus = pGPT_INT->isc;
@@ -737,7 +726,7 @@ static ssize_t flyer_xil_read(struct file* file, char* buf, size_t count, loff_t
     //MSG("Read cmd, %s, count: %d\n",readBuf,readCount);
     readBuf[0] = flyer_xil_alive();
     copy_to_user(buf,readBuf,readCount);
-    main_pid = current->pid;
+    main_pid = find_vpid(current->pid);
     return readCount;
 }
 
@@ -753,7 +742,7 @@ static ssize_t flyer_xil_write(struct file* file, const char* buf, size_t count,
 	//MSG("Not the right size, got %d, should have %d or %d\n",count,Xilinx_Size,Xilinx_Size_3d);
 	return 0;
     }
-    main_pid = current->pid;
+    main_pid = find_vpid(current->pid);
     /* Actually write something*/
     //MSG("Write cmd, %s, count: %d\n",writeBuf,MasterCount);
     flyer_xil_program_init();
@@ -793,7 +782,7 @@ static int flyer_xil_release(struct inode* inode, struct file* file)
     return 0;
 }
 
-static int flyer_xil_ioctl(struct inode* inode, struct file* file, unsigned int cmd, unsigned long arg)
+static long flyer_xil_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
 {
     /*
     AT91PS_PIO pPIOA = (AT91PS_PIO)AT91_IO_P2V(AT91C_BASE_PIOA);
@@ -1208,7 +1197,7 @@ static struct file_operations flyer_xil_fops = {
     owner:		THIS_MODULE,
     read:		flyer_xil_read,
     write:		flyer_xil_write,
-    ioctl:		flyer_xil_ioctl,
+    unlocked_ioctl:	flyer_xil_ioctl,
     open:		flyer_xil_open,
     release:	        flyer_xil_release,
     };
@@ -1217,12 +1206,20 @@ static int __init flyer_xil_init_module(void)
 {
     int res = 0;
     int status;
-    u32 b3ap;
     unsigned long phys_addr;
     unsigned long end_addr;
     unsigned long base_len;
+    struct device_node* opb_node = NULL;
     MSG("Module flyer_xil init\n" );
-    
+
+    /* get the clock (Hz) for the OPB.*/
+    opb_node = of_find_node_by_path("/plb/opb");
+    if (!opb_node) {
+    	printk(KERN_ERR "(E) Flyer_Xilinx failed to find device tree node /plb/opb\n");
+	return -1;
+    }
+    opb_freq = *(u32*)of_get_property(opb_node, "clock-frequency", NULL);
+
     readBuf = kmalloc(BUFSIZE, GFP_KERNEL);
     writeBuf = kmalloc(BUFSIZE,GFP_KERNEL);
     if (!readBuf || !writeBuf)
@@ -1235,7 +1232,6 @@ static int __init flyer_xil_init_module(void)
 	MSG("Can't register device flyer_xil with kernel.\n");
 	return res;
     }
-    b3ap = EBC_READ(DCRN_EBC0_B3AP);
     
     if (!xil_addr_base)
     {
@@ -1370,8 +1366,7 @@ static int __init flyer_xil_init_module(void)
    
     
     *((unsigned short*)xil_addr_base + XIL_IO_CHANGE_OFFSET) = 0;
-    printk(KERN_INFO "FlyerII Xilinx driver v%s  %s\n",
-	   XILINX_VERSION, __DATE__);   
+    printk(KERN_INFO "FlyerII Xilinx driver v%s  %s\n",XILINX_VERSION);   
     return 0;
 }
 
@@ -1452,7 +1447,7 @@ static irqreturn_t flyer_xil_interrupt(int irq, void *dev_id)
 	{
 	    printk(KERN_ERR "Running TestMark, key register: 0x%02x\n",key_stat);
 	    marking_testmark = 1;
-	    kill_proc(main_pid,SIG_TESTMARK,1);
+	    kill_pid(main_pid,SIG_TESTMARK,1);
 	}
     }
     
@@ -1462,7 +1457,7 @@ static irqreturn_t flyer_xil_interrupt(int irq, void *dev_id)
 	temp_status = (int_table & TEMP_INTERRUPTS) >> 3;
 	interrupt_type = TEMP_INTERRUPTS;
 	if (main_pid)
-	    kill_proc(main_pid,SIG_OVERTEMP,1);
+	    kill_pid(main_pid,SIG_OVERTEMP,1);
 	
     }
     
@@ -1474,7 +1469,7 @@ static irqreturn_t flyer_xil_interrupt(int irq, void *dev_id)
 	//printk("Got IO Change %x  : %d  :%x\n",int_table, SIG_IOCHANGE, io_stat);
 	interrupt_type = IOCHANGE_INTERRUPT;
 	if (main_pid)
-	    kill_proc(main_pid,SIG_IOCHANGE,1);
+	    kill_pid(main_pid,SIG_IOCHANGE,1);
     }
     
     if (int_table & ABORT_INTERRUPT)
@@ -1484,7 +1479,7 @@ static irqreturn_t flyer_xil_interrupt(int irq, void *dev_id)
 	interrupt_type = ABORT_INTERRUPT;
 	//printk("Got Abort %x  : %d  :%x\n",int_table, SIG_IOCHANGE, io_stat);
 	if (main_pid)
-	    kill_proc(main_pid,SIG_IOCHANGE,1);
+	    kill_pid(main_pid,SIG_IOCHANGE,1);
     }    
     // As a last step, clear the XILINX interrupt again just in case another
     // interrupt occurred after the previous read but before this handler

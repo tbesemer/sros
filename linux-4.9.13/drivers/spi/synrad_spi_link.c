@@ -33,13 +33,6 @@
 #include <linux/pci.h>
 #include <asm/byteorder.h>
 
-#define AMCC
-
-#ifdef AMCC
-#include <asm/ocp.h>
-#endif
-
-
 #define SPI_LINK_MAJOR 241
 #define SPI_IOCTL_BASE 0xAF
 #define SPI_GET_SERVO_STATUS _IOWR(SPI_IOCTL_BASE,1,int)
@@ -72,6 +65,7 @@
 #define MSG(string, args...)
 #endif
 
+static u32 opb_quarter_freq;
 static int iDev2 = 2;
 static int iDev3 = 3;
 static int bAcquiring = 0;
@@ -218,7 +212,7 @@ static ssize_t spi_link_read(struct file* file, char* buf, size_t count, loff_t 
     xil_addr = xil_get_mapped_address();
     if(minor == iDev2)
 	xil = ConvertEndian(*((unsigned short*)xil_addr + XIL_STATUS_OFFSET));
-    else if (minor == iDev3)
+    else // if (minor == iDev3)
 	xil = ConvertEndian(*((unsigned short*)xil_addr + XIL_Z_STATUS_OFFSET));
     //xil = *((unsigned short*)xil_addr + XIL_STATUS_OFFSET);
     
@@ -375,9 +369,10 @@ static int spi_link_release(struct inode* inode, struct file* file)
     return 0;
 }
 
-static int spi_link_ioctl(struct inode* inode, struct file* file, unsigned int cmd, unsigned long arg)
+static long spi_link_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
 {
     
+	struct inode* inode = file->f_path.dentry->d_inode;
     short* pBuf = (short*)0;
     int iMinor = iminor(inode);
     short* pReadBuf = (short*)readBuf;
@@ -385,7 +380,6 @@ static int spi_link_ioctl(struct inode* inode, struct file* file, unsigned int c
     u8 mode;
     unsigned char cdm;
     int scr;
-    unsigned int opb_freq;
     int i=0;
 	/* Make sure the command belongs to us*/
     if (_IOC_TYPE(cmd) != SPI_IOCTL_BASE)
@@ -429,11 +423,9 @@ static int spi_link_ioctl(struct inode* inode, struct file* file, unsigned int c
     case SPI_SET_SPEED:
 	
 	controller->mode &= ~SPMODE_ENABLE;
-	opb_freq = ocp_sys_info.opb_bus_freq >> 2;
 	
 	cdm = 0;
-	// opb_freq was already divided by 4 
-	scr = opb_freq/((arg>opb_freq)?opb_freq:arg) - 1;
+	scr = opb_quarter_freq/((arg>opb_quarter_freq)?opb_quarter_freq:arg) - 1;
 	cdm = scr & 0xff;
 	current_speed = cdm;
 	controller->clock = cdm;
@@ -506,7 +498,7 @@ static struct file_operations spi_link_fops = {
 owner:		THIS_MODULE,
 read:		spi_link_read,
 write:		spi_link_write,
-ioctl:		spi_link_ioctl,
+unlocked_ioctl:	spi_link_ioctl,
 open:		spi_link_open,
 release:	spi_link_release,
 };
@@ -522,10 +514,19 @@ static int __init synrad_spi_link_init_module(void)
 	unsigned long base_len;
 	unsigned char cdm;
 	int scr;
+	struct device_node* opb_node = NULL;
 	u8 regval = SPMODE_ENABLE;
 	xil_addr = NULL;
 	MSG("Module synrad_spi_link init\n" );
-	init_MUTEX(&spi_lock);
+	/* get the clock (Hz) for the OPB.*/
+	opb_node = of_find_node_by_path("/plb/opb");
+	if (!opb_node) {
+		printk(KERN_ERR "(E) Flyer_Xilinx failed to find device tree node /plb/opb\n");
+		return -1;
+	}
+	opb_quarter_freq = *(u32*)of_get_property(opb_node, "clock-frequency", NULL) >> 2;
+
+	sema_init(&spi_lock,1);
 	phys_addr = SPI_PHYS_START;
 	end_addr = SPI_PHYS_END;
 	base_len = end_addr - phys_addr + 1;
@@ -563,8 +564,8 @@ static int __init synrad_spi_link_init_module(void)
 	spi_dev[1].pcs = CS_1;
     
 	/* get the clock (Hz) for the OPB. Set in sequoia_setup_arch() */
-	spi_dev[0].opb_freq = ocp_sys_info.opb_bus_freq >> 2;
-	spi_dev[1].opb_freq = ocp_sys_info.opb_bus_freq >> 2;
+	spi_dev[0].opb_freq = opb_quarter_freq;
+	spi_dev[1].opb_freq = opb_quarter_freq;
     
 	// Set up GPIO40 and GPIO41 for chip select active low
 	
@@ -593,15 +594,12 @@ static int __init synrad_spi_link_init_module(void)
 	// Set up SPI default values
 	// set the clock 
 	cdm = 0;
-	// opb_freq was already divided by 4 
 	scr = (spi_dev[0].opb_freq/DEFAULT_CLK_HZ1) - 1;
-	//printk("opb_freq = %d scr = %d\n",spi_dev[0].opb_freq,scr);
 	cdm = scr & 0xff;
 	spi_dev[0].clock = cdm;
 	current_speed = cdm;
 	controller->clock = cdm;
 	cdm = 0;
-	// opb_freq was already divided by 4 
 	scr = ((spi_dev[0].opb_freq/DEFAULT_CLK_HZ2) - 1);
 	cdm = scr & 0xff;
 	spi_dev[1].clock = cdm;
