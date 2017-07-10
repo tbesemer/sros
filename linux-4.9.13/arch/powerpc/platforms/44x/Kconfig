@@ -174,15 +174,9 @@ config YOSEMITE
 	default n
 	select PPC44x_SIMPLE
 	select 440EP
-	select PCI
+	#select PCI
 	help
 	  This option enables support for the AMCC PPC440EP evaluation board.
-
-config FLYER
-	bool "Flyer"
-	select PPC44x_SIMPLE
-	help
-	  This option enables support for the AMCC PPC440EP Flyer II board.
 
 config ISS4xx
 	bool "ISS 4xx Simulator"

@@ -592,7 +592,6 @@ source "drivers/char/xillybus/Kconfig"
 
 config FLYER_XILINX
 	tristate "AMCC PowerPC 440EP Flyer II Xilinx Driver"
-	depends on FLYER
 	default m
 	help
 	  Driver for accessing the Xilinx on the Flyer II board
