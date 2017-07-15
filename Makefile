@@ -46,9 +46,12 @@ buildroot_clean:
 .PHONY: kernel
 kernel:
 	make -C ${KERNEL_BASE} V=1 ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} cuImage.yosemite
-	# make -C ${KERNEL_BASE} V=1 ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} yosemite.dtb
 	cp -p ${KERNEL_BASE}/arch/powerpc/boot/cuImage.yosemite ${SROS_ROOT}/output/cuImage.yosemite
-	# cp -p ${KERNEL_BASE}/arch/powerpc/boot/yosemite.dtb ${SROS_ROOT}/output/yosemite.dtb
+
+.PHONY: kernel_initramfs
+kernel_initramfs:
+	make -C ${KERNEL_BASE} V=1 ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} cuImage.yosemite
+	cp -p ${KERNEL_BASE}/arch/powerpc/boot/cuImage.yosemite ${SROS_ROOT}/output/cuImage.yosemite.initramfs
 
 .PHONY: kernel_defconfig
 kernel_defconfig:
@@ -59,6 +62,15 @@ kernel_defconfig:
 	      make -C ${KERNEL_BASE} ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} oldconfig; \
           fi;
 
+.PHONY: kernel_initramfs_defconfig
+kernel_initramfs_defconfig:
+	@ if [ -f ${KERNEL_BASE}/.config ]; then \
+	      echo "Config Exists, Not Overwriting"; \
+	  else \
+	      cp -p ${SROS_ROOT}/config/sros_initramfs_config ${KERNEL_BASE}/.config; \
+	      make -C ${KERNEL_BASE} ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} oldconfig; \
+          fi;
+
 .PHONY: kernel_xconfig
 kernel_xconfig:
 	make -C ${KERNEL_BASE} ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} xconfig
@@ -66,6 +78,10 @@ kernel_xconfig:
 .PHONY: kernel_saveconfig
 kernel_saveconfig:
 	cp -p ${KERNEL_BASE}/.config ${SROS_ROOT}/config/sros_kernel_config 
+
+.PHONY: kernel_initramfs_saveconfig
+kernel_initramfs_saveconfig:
+	cp -p ${KERNEL_BASE}/.config ${SROS_ROOT}/config/sros_initramfs_config
 
 .PHONY: kernel_mrproper
 kernel_mrproper:

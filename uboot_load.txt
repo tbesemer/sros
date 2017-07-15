@@ -8,6 +8,8 @@ setenv serverip 192.168.2.113
 
 setenv bootargs console=ttyS0,115200 root=/dev/nfs rw nfsroot=192.168.2.113:/home/tbesemer/synradfs rootfstype=nfs ip=dhcp
 
+setenv bootargs console=ttyS0,115200 ip=dhcp
+
 tftp 2000000 cuImage.yosemite
 bootm 2000000
 
