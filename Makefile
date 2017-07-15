@@ -45,7 +45,7 @@ buildroot_clean:
 #
 .PHONY: kernel
 kernel:
-	make -C ${KERNEL_BASE} V=1 ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} cuImage.yosemite modules
+	make -C ${KERNEL_BASE} V=1 ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} cuImage.yosemite
 	# make -C ${KERNEL_BASE} V=1 ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} yosemite.dtb
 	cp -p ${KERNEL_BASE}/arch/powerpc/boot/cuImage.yosemite ${SROS_ROOT}/output/cuImage.yosemite
 	# cp -p ${KERNEL_BASE}/arch/powerpc/boot/yosemite.dtb ${SROS_ROOT}/output/yosemite.dtb
