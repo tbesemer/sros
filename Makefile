@@ -3,6 +3,12 @@
 SROS_ROOT := $(shell pwd)
 include ${SROS_ROOT}/make/makefile_os.inc
 
+export STAGING_DIR := ${SROS_ROOT}/staging
+export OUTPUT_DIR := ${SROS_ROOT}/output
+export CPIO_INPUT := ${SROS_ROOT}/output/rootfs_initramfs.cpio
+export CPIO_OUTPUT := ${SROS_ROOT}/output/rootfs_initramfs_kernel.cpio
+export INITRAMFS_OVERLAY :=${SROS_ROOT}/initramfs_overlay
+
 #  Master Build Targets
 #
 .PHONY: all
@@ -98,6 +104,15 @@ uboot:
 .PHONY: uboot_saveconfig
 uboot_saveconfig:
 	cp -p ${UBOOT_BASE}/.config ${SROS_ROOT}/config/sros_uboot_config 
+
+.PHONY: initramfs_final
+initramfs_final:
+	fakeroot bin/do_build_initramfs.sh
+
+.PHONY: initramfs_final_clean
+initramfs_final_clean:
+	rm -rf ${STAGING_DIR}/*
+
 
 .PHONY: help
 help:
