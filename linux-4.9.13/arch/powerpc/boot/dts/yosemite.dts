@@ -133,16 +133,17 @@
 			EBC0: ebc {
 				compatible = "ibm,ebc-440ep", "ibm,ebc-440gp", "ibm,ebc";
 				dcr-reg = <0x012 0x002>;
-				#address-cells = <2>;
-				#size-cells = <1>;
 				clock-frequency = <0>; /* Filled in by zImage */
 				interrupts = <0x5 0x1>;
 				interrupt-parent = <&UIC1>;
+				#address-cells = <2>;
+				#size-cells = <1>;
+				ranges;
 
-				nor_flash@0,0xFE0000000 {
-					compatible = "amd,p29gl256p", "cfi-flash";
-					#bank-width = <2>;
-					reg = <0 0x00000000 0x02000000>;
+				nor_flash@0,FE000000 {
+					compatible = "amd,s29gl256p", "cfi-flash";
+					bank-width = <2>;
+					reg = <0 0xFE000000 0x02000000>;
 					#address-cells = <1>;
 					#size-cells = <1>;
 					partition@0 {
