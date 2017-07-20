@@ -146,6 +146,10 @@
 					reg = <0 0xFE000000 0x02000000>;
 					#address-cells = <1>;
 					#size-cells = <1>;
+				    partitions@0 {
+					compatible = "fixed-partitions";
+					#address-cells = <1>;
+					#size-cells = <1>;
 					partition@0 {
 						label = "Kernel";
 						reg = <0x00000000 0x00180000>;
@@ -154,6 +158,7 @@
 						label = "OS Filesystem";
 						reg = <0x00180000 0x01DE0000>;
 					};
+				    };
 				};
 			};
 
