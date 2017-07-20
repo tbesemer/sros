@@ -53,6 +53,7 @@ buildroot_clean:
 kernel:
 	make -C ${KERNEL_BASE} V=1 ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} cuImage.yosemite
 	cp -p ${KERNEL_BASE}/arch/powerpc/boot/cuImage.yosemite ${SROS_ROOT}/output/cuImage.yosemite
+	cp output/cuImage.yosemite /tftpboot/
 
 .PHONY: kernel_initramfs
 kernel_initramfs:
