@@ -179,8 +179,12 @@
 						#address-cells = <1>;
 						#size-cells = <1>;
 						partition@00000000 {
+							label = "New Kernel";
+							reg = <0x00000000 0x00600000>;
+						};
+						partition@01800000 {
 							label = "User Files";
-							reg = <0x00000000 0x02000000>;
+							reg = <0x00600000 0x01800000>;
 						};
 				    	};
 				};
