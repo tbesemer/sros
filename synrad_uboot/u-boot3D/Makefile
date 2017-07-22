@@ -1,7 +1,7 @@
 # Dan Austin: Added direct paths to appropriate toolchain and predefined arch.
-MAKEFILE_DIR:=$(dir $(abspath $(firstword $(MAKEFILE_LIST))))
+#MAKEFILE_DIR:=$(dir $(abspath $(firstword $(MAKEFILE_LIST))))
 ARCH=ppc
-CROSS_COMPILE=$(MAKEFILE_DIR)/../../Toolchains/ppc/usr/bin/ppc_4xxFP-
+#CROSS_COMPILE=$(MAKEFILE_DIR)/../../Toolchains/ppc/usr/bin/ppc_4xxFP-
 
 #
 # (C) Copyright 2000-2009
