@@ -15,8 +15,13 @@ uboot_env:
 uboot_env_clean:
 	make -C ${UBOOT_BASE} V=1 env clean
 
+clean:
+	make -C ${UBOOT_BASE} V=1 clean
+	rm -f output/*
+
 mrproper:
 	make -C ${UBOOT_BASE} V=1 mrproper
+	rm -f output/*
 	
 
 
