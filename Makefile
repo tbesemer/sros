@@ -102,6 +102,12 @@ uboot:
 	make -C ${UBOOT_BASE} CROSS_COMPILE=${TOOLCHAIN_PREFIX} V=1 
 	cp -p ${UBOOT_BASE}/u-boot.bin ${SROS_ROOT}/output/u-boot.bin
 
+.PHONY: uboot_env
+uboot_env:
+	make -C ${UBOOT_BASE} CROSS_COMPILE=${TOOLCHAIN_PREFIX} V=1 env
+	cp -p ${UBOOT_BASE}/tools/env/fw_printenv output/
+	cp -p ${UBOOT_BASE}/tools/env/fw_env.config output/
+
 .PHONY: uboot_saveconfig
 uboot_saveconfig:
 	cp -p ${UBOOT_BASE}/.config ${SROS_ROOT}/config/sros_uboot_config 
