@@ -23,11 +23,16 @@ cpio -id  < $CPIO_INPUT
 #
 echo "Populating Initramfs"
 cp -Rp $INITRAMFS_OVERLAY/* .
+cp -p $OUTPUT_DIR/fw_printenv usr/bin/fw_printenv
+pushd usr/bin
+ln -s fw_printenv fw_setenv
+popd
 
 #  Rebuild CPIO File for Kernel
 #
 echo "Packaging Initramfs CPIO"
-find . | cpio -o > $CPIO_OUTPUT
+find .  | cpio -H newc -o > "$CPIO_OUTPUT".tmp
+cat "$CPIO_OUTPUT".tmp | gzip > "$CPIO_OUTPUT".igz
 
 popd
 

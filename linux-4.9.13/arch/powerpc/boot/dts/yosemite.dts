@@ -155,7 +155,7 @@
 							reg = <0x00000000 0x00180000>;
 						};
 						partition@00180000 {
-							label = "OS Filesystem";
+							label = "User Files";
 							reg = <0x00180000 0x01DE0000>;
 						};
 						partition@01F60000 {
@@ -183,7 +183,7 @@
 							reg = <0x00000000 0x00600000>;
 						};
 						partition@01800000 {
-							label = "User Files";
+							label = "OS Filesystem";
 							reg = <0x00600000 0x01800000>;
 						};
 				    	};

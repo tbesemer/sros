@@ -27,8 +27,12 @@ setenv bootargs console=ttyS0,115200 ip=dhcp
 tftp 2000000 cuImage.yosemite
 bootm 2000000
 
+# Initramfs Kernel Network boot.
+#
+tftp 2000000 cuImage.yosemite.initramfs
+bootm 2000000
+
+
 # Flash boot.
 #
-bootm FD800000
-
 bootm FC000000

@@ -23,19 +23,36 @@ clean:	kernel_mrproper buildroot_clean
 .PHONY: buildroot
 buildroot:
 	make -C ${BUILDROOT_BASE}
-	cp -p ${BUILDROOT_BASE}/output/images/rootfs.tar ${SROS_ROOT}/output/rootfs.tar
+	cp -p ${BUILDROOT_BASE}/output/images/rootfs.tar.gz ${SROS_ROOT}/output/rootfs.tar.gz
+
+.PHONY: buildroot_initramfs
+buildroot_initramfs:
+	make -C ${BUILDROOT_BASE}
+	cp -p ${BUILDROOT_BASE}/output/images/rootfs.cpio ${SROS_ROOT}/output/rootfs_initramfs.cpio
 
 .PHONY: buildroot_defconfig
 buildroot_defconfig:
 	@ if [ -f ${BUILDROOT_BASE}/.config ]; then \
 	      echo "Config Exists, Not Overwriting"; \
 	  else \
-	      cp -p ${SROS_ROOT}/config/sros_config ${BUILDROOT_BASE}/.config; \
+	      cp -p ${SROS_ROOT}/config/sros_buildroot_config ${BUILDROOT_BASE}/.config; \
+          fi;
+
+.PHONY: buildroot_initramfs_defconfig
+buildroot_initramfs_defconfig:
+	@ if [ -f ${BUILDROOT_BASE}/.config ]; then \
+	      echo "Config Exists, Not Overwriting"; \
+	  else \
+	      cp -p ${SROS_ROOT}/config/sros_buildroot_initramfs_config ${BUILDROOT_BASE}/.config; \
           fi;
 
 .PHONY: buildroot_saveconfig
 buildroot_saveconfig:
-	cp -p ${BUILDROOT_BASE}/.config ${SROS_ROOT}/config/sros_config 
+	cp -p ${BUILDROOT_BASE}/.config ${SROS_ROOT}/config/sros_buildroot_config 
+
+.PHONY: buildroot_initramfs_saveconfig
+buildroot_initramfs_saveconfig:
+	cp -p ${BUILDROOT_BASE}/.config ${SROS_ROOT}/config/sros_buildroot_initramfs_config 
 
 .PHONY: buildroot_xconfig
 buildroot_xconfig:
@@ -45,7 +62,6 @@ buildroot_xconfig:
 buildroot_clean:
 	make -C ${BUILDROOT_BASE} clean
 	rm -f ${BUILDROOT_BASE}/.config
-	rm -f ${SROS_ROOT}/output/rootfs.tar
 
 #  Kernel Build Targets.
 #
@@ -56,9 +72,11 @@ kernel:
 	cp output/cuImage.yosemite /tftpboot/
 
 .PHONY: kernel_initramfs
-kernel_initramfs:
+kernel_initramfs: initramfs_final
 	make -C ${KERNEL_BASE} V=1 ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} cuImage.yosemite
 	cp -p ${KERNEL_BASE}/arch/powerpc/boot/cuImage.yosemite ${SROS_ROOT}/output/cuImage.yosemite.initramfs
+	cp output/cuImage.yosemite.initramfs /tftpboot/
+
 
 .PHONY: kernel_defconfig
 kernel_defconfig:
@@ -98,28 +116,35 @@ kernel_mrproper:
 
 .PHONY: uboot
 uboot:
-	make -C ${UBOOT_BASE} CROSS_COMPILE=${TOOLCHAIN_PREFIX} V=1 flyer3d_defconfig
-	make -C ${UBOOT_BASE} CROSS_COMPILE=${TOOLCHAIN_PREFIX} V=1 
-	cp -p ${UBOOT_BASE}/u-boot.bin ${SROS_ROOT}/output/u-boot.bin
+	@ if [ -f ${OUTPUT_DIR}/fw_printenv ]; then \
+		echo "U-Boot built"; \
+	  else \
+		make -C ${UBOOT_BASE} CROSS_COMPILE=${TOOLCHAIN_PREFIX} V=1 flyer3d_defconfig ;\
+		make -C ${UBOOT_BASE} CROSS_COMPILE=${TOOLCHAIN_PREFIX} V=1  ;\
+		cp -p ${UBOOT_BASE}/u-boot.bin ${SROS_ROOT}/output/u-boot.bin ;\
+	  fi
 
 .PHONY: uboot_env
-uboot_env:
-	make -C ${UBOOT_BASE} CROSS_COMPILE=${TOOLCHAIN_PREFIX} V=1 env
-	cp -p ${UBOOT_BASE}/tools/env/fw_printenv output/
-	cp -p ${UBOOT_BASE}/tools/env/fw_env.config output/
+uboot_env: uboot
+	@ if [ -f ${OUTPUT_DIR}/fw_printenv ]; then \
+		echo "U-Boot fw_printenv built"; \
+	  else \
+		make -C ${UBOOT_BASE} CROSS_COMPILE=${TOOLCHAIN_PREFIX} V=1 env;\
+		cp -p ${UBOOT_BASE}/tools/env/fw_printenv output/;\
+		cp -p ${UBOOT_BASE}/tools/env/fw_env.config output/;\
+	  fi
 
 .PHONY: uboot_saveconfig
 uboot_saveconfig:
 	cp -p ${UBOOT_BASE}/.config ${SROS_ROOT}/config/sros_uboot_config 
 
 .PHONY: initramfs_final
-initramfs_final:
+initramfs_final: initramfs_final_clean uboot_env
 	fakeroot bin/do_build_initramfs.sh
 
 .PHONY: initramfs_final_clean
 initramfs_final_clean:
 	rm -rf ${STAGING_DIR}/*
-
 
 .PHONY: help
 help:
