@@ -180,11 +180,11 @@
 						#size-cells = <1>;
 						partition@00000000 {
 							label = "New Kernel";
-							reg = <0x00000000 0x00600000>;
+							reg = <0x00000000 0x00800000>;
 						};
 						partition@01800000 {
 							label = "OS Filesystem";
-							reg = <0x00600000 0x01800000>;
+							reg = <0x00800000 0x01800000>;
 						};
 				    	};
 				};
