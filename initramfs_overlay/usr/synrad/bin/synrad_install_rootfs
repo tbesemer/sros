@@ -1,0 +1,17 @@
+#!/bin/sh
+
+/usr/sbin/flash_erase -j -q /dev/mtd5 0 0
+mkdir oldrootfs
+mount -t jffs2 /dev/mtdblock1 oldrootfs
+mkdir /newrootfs
+mount -t jffs2 /dev/mtdblock5 /newrootfs
+cd /newrootfs
+tar xf /root/oldrootfs/home/new_rootfs.tar
+sync
+cd
+umount /dev/mtdblock1
+mount --move /sys /newrootfs/sys
+mount --move /proc /newrootfs/proc
+mount --move /dev /newrootfs/dev
+exec switch_root /newrootfs /sbin/init
+
