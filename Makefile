@@ -12,7 +12,7 @@ export INITRAMFS_OVERLAY :=${SROS_ROOT}/initramfs_overlay
 #  Master Build Targets
 #
 .PHONY: all
-all:  buildroot_defconfig buildroot kernel_defconfig kernel
+all:  buildroot_initramfs_defconfig buildroot kernel_initramfs_defconfig kernel_initramfs
 
 .PHONY: clean
 clean:	kernel_mrproper buildroot_clean
