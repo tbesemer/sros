@@ -1,8 +1,22 @@
-#!/bin/sh
-# devtmpfs does not get automounted for initramfs
-/bin/mount -t devtmpfs devtmpfs /dev
+#!/bin/busybox sh
+mount -n -t proc     proc     /proc
+mount -n -t sysfs    sysfs    /sys
+
 exec 0</dev/console
 exec 1>/dev/console
 exec 2>/dev/console
+
+
 echo "SYNRAD Early Boot"
-exec /sbin/init $*
+#exec /sbin/init $*
+
+echo "First Boot: Mounting New Root FS"
+mkdir -p /mnt/newrootfs
+/bin/mknod /dev/mtdblock5 b 31 5
+mount -t jffs2 /dev/mtdblock5 /mnt/newrootfs
+echo "First Boot: Executing switch_root"
+umount /proc 
+umount /sys
+
+exec switch_root  /mnt/newrootfs /sbin/init init
+

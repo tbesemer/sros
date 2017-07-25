@@ -16,7 +16,7 @@ setenv bootargs console=ttyS0,115200 root=/dev/nfs rw nfsroot=192.168.2.113:/hom
 
 #  MTD Root FS Boot.
 #
-setenv bootargs console=ttyS0,115200 root=/dev/mtdblock4 rw s rootfstype=jffs2 ip=dhcp
+setenv bootargs console=ttyS0,115200 root=/dev/mtdblock5 rw s rootfstype=jffs2 ip=dhcp
 
 #  Initramfs Boot.
 #

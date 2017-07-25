@@ -1,17 +1,25 @@
 #!/bin/sh
 
-/usr/sbin/flash_erase -j -q /dev/mtd5 0 0
-mkdir oldrootfs
-mount -t jffs2 /dev/mtdblock1 oldrootfs
-mkdir /newrootfs
-mount -t jffs2 /dev/mtdblock5 /newrootfs
-cd /newrootfs
-tar xf /root/oldrootfs/home/new_rootfs.tar
+#echo "First Boot: Erasing /dev/mtd5"
+#/usr/sbin/flash_erase -j -q /dev/mtd5 0 0
+#mkdir /oldrootfs
+#echo "First Boot: Mounting Orginal Root FS"
+#mount -t jffs2 /dev/mtdblock1 /oldrootfs
+mkdir -p /tmp/.newrootfs
+echo "First Boot: Mounting New Root FS"
+mount -t jffs2 /dev/mtdblock5 /tmp/.newrootfs
+#cd /newrootfs
+#echo "First Boot: Populating New Root FS"
+#tar xf /oldrootfs/home/new_rootfs.tar
 sync
-cd
-umount /dev/mtdblock1
-mount --move /sys /newrootfs/sys
-mount --move /proc /newrootfs/proc
-mount --move /dev /newrootfs/dev
-exec switch_root /newrootfs /sbin/init
+#umount /dev/mtdblock1
+#mount --move /sys /newrootfs/sys
+#mount --move /proc /newrootfs/proc
+#mount --move /dev /newrootfs/dev
+echo "First Boot: Executing switch_root"
+cd /tmp/.newrootfs
+rm init
+pwd
+umount /proc /sys
+exec switch_root -c /dev/console /tmp/.newrootfs /sbin/init
 
