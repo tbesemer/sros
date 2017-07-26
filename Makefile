@@ -8,6 +8,8 @@ export OUTPUT_DIR := ${SROS_ROOT}/output
 export CPIO_INPUT := ${SROS_ROOT}/output/rootfs_initramfs.cpio
 export CPIO_OUTPUT := ${SROS_ROOT}/output/rootfs_initramfs_kernel.cpio
 export INITRAMFS_OVERLAY :=${SROS_ROOT}/initramfs_overlay
+export ROOTFS_INPUT := ${SROS_ROOT}/output/rootfs.tar
+export ROOTFS_OUTPUT := ${SROS_ROOT}/output/rootfs_production.tar
 
 #  Master Build Targets
 #
@@ -24,6 +26,7 @@ clean:	kernel_mrproper buildroot_clean
 buildroot:
 	make -C ${BUILDROOT_BASE}
 	cp -p ${BUILDROOT_BASE}/output/images/rootfs.tar ${SROS_ROOT}/output/new_rootfs.tar
+	fakeroot bin/do_build_rootfs.sh
 
 .PHONY: buildroot_initramfs
 buildroot_initramfs:

@@ -29,9 +29,9 @@ then
         cat /home/cuImage.yosemite.initramfs >> /dev/mtd4
         echo "Update: Setting Environment Variables"    
         /usr/bin/fw_setenv kernel_addr 
-        /usr/bin/fw_setenv kernel_addr fe000000
-        /usr/bin/fw_setenv upgrade_phase 
-        /usr/bin/fw_setenv upgrade_phase 1
+        /usr/bin/fw_setenv kernel_addr fc000000
+        /usr/bin/fw_setenv boot_state 
+        /usr/bin/fw_setenv boot_state 1
         sync
         echo "Update: Reboot to new Kernel"    
         reboot

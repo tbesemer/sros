@@ -27,6 +27,10 @@ cp -p $OUTPUT_DIR/fw_printenv usr/bin/fw_printenv
 pushd usr/bin
 ln -s fw_printenv fw_setenv
 popd
+mknod dev/mtd4 c 90 8
+mknod dev/mtd5 c 90 10
+mknod dev/mtdblock4 b 31 4
+mknod dev/mtdblock5 b 31 5
 
 #  Rebuild CPIO File for Kernel
 #

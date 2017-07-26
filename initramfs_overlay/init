@@ -6,17 +6,82 @@ exec 0</dev/console
 exec 1>/dev/console
 exec 2>/dev/console
 
+BOOT_STATE=0;
 
-echo "SYNRAD Early Boot"
-#exec /sbin/init $*
+process_boot_state_get_state()
+{
+    BOOT_STATE=`/usr/bin/fw_printenv | sed -n '/boot_state/p' | awk -F= '{print $2}'`
+}
 
-echo "First Boot: Mounting New Root FS"
-mkdir -p /mnt/newrootfs
-/bin/mknod /dev/mtdblock5 b 31 5
-mount -t jffs2 /dev/mtdblock5 /mnt/newrootfs
-echo "First Boot: Executing switch_root"
-umount /proc 
-umount /sys
+process_boot_state_1()
+{
+    echo "Synrad Boot: Boot State 1, Install Root FS"
 
-exec switch_root  /mnt/newrootfs /sbin/init init
+    echo "Boot State 1: Mounting Orginal Root FS"
+    /bin/mkdir /oldrootfs
+    /bin/mount -t jffs2 /dev/mtdblock1 /oldrootfs
+    if [ ! -f /oldrootfs/home/rootfs_production.tar ]
+    then
+        echo "Boot State 1: New Filesystem Missing, Running Init"
+        exec /sbin/init $*
+    fi
+
+    echo "Boot State 1: Erasing /dev/mtd5"
+    /usr/sbin/flash_erase -j -q /dev/mtd5 0 0
+
+    echo "Boot State 1: Mounting New Root FS"
+    /bin/mkdir -p /mnt/newrootfs
+    /bin/mount -t jffs2 /dev/mtdblock5 /mnt/newrootfs
+
+    echo "Boot State 1: Populating New Root FS"
+    cd /mnt/newrootfs
+    /bin/tar xf /oldrootfs/home/rootfs_production.tar
+    /bin/umount /dev/mtdblock1
+
+    echo "Boot State 1: Setting Boot State to 2"
+    /usr/bin/fw_setenv boot_state
+    /usr/bin/fw_setenv boot_state 2
+
+    echo "Boot State 1: Executing switch_root"
+    /bin/umount /proc
+    /bin/umount /sys
+    cd
+    exec switch_root  /mnt/newrootfs /sbin/init init
+
+}
+
+process_boot_state_2()
+{
+    echo "Synrad Boot: Boot State 2, Normal Boot"
+
+    echo "Boot State 2: Mounting New Root FS"
+    /bin/mkdir -p /mnt/newrootfs
+    /bin/mount -t jffs2 /dev/mtdblock5 /mnt/newrootfs
+
+    echo "Boot State 2: Executing switch_root"
+    /bin/umount /proc
+    /bin/umount /sys
+    exec switch_root  /mnt/newrootfs /sbin/init init
+}
+
+process_boot_state_get_state;
+echo "Synrad Boot: Boot State: $BOOT_STATE"
+
+if [ $BOOT_STATE -eq 1 ]
+then
+    process_boot_state_1;
+elif [ $BOOT_STATE -eq 2 ]
+then
+    process_boot_state_2;
+else
+    echo "Synrad Boot: Unknown Boot State, Running init" 
+    /bin/umount /proc
+    /bin/umount /sys
+    exec /sbin/init $*
+fi
+
+echo "Synrad Boot: Switch Root Returned, Running Init"
+/bin/umount /proc
+/bin/umount /sys
+exec /sbin/init $*
 
