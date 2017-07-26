@@ -14,7 +14,10 @@ export ROOTFS_OUTPUT := ${SROS_ROOT}/output/rootfs_production.tar
 #  Master Build Targets
 #
 .PHONY: all
-all:  buildroot_initramfs_defconfig buildroot kernel_initramfs_defconfig kernel_initramfs
+all:  buildroot_initramfs_defconfig buildroot_initramfs kernel_initramfs_defconfig kernel_initramfs
+
+.PHONY: buildroot_production
+buildroot_production: buildroot_clean buildroot_defconfig buildroot
 
 .PHONY: clean
 clean:	kernel_mrproper buildroot_clean
