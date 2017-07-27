@@ -327,6 +327,20 @@
 		};
 	};
 
+	XILINX: xilinx {
+		interrupt-parent = <&UIC0>;
+		interrupts = <0x1b 0x1>; /* interrupt 27 with low-to-high edge trigger */
+	};
+
+	GPT0: timer0 {
+		interrupt-parent = <&UIC0>;
+		interrupts = <0x12 0x4>; /* Interrupt 18 with active high trigger */
+	};
+	GPT1: timer1 {
+		interrupt-parent = <&UIC0>;
+		interrupts = <0x13 0x4>; /* Interrupt 19 with active high trigger */
+	};
+
 	chosen {
 		linux,stdout-path = "/plb/opb/serial@ef600300";
 	};

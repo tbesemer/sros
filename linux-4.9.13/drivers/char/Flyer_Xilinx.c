@@ -35,9 +35,10 @@
 #include <asm/FlyerII.h>
 #include <linux/of_device.h>
 #include <linux/of_platform.h>
+#include <linux/of_irq.h>
 #include <linux/fs.h>
 
-#define XILINX_VERSION "1.0"
+#define XILINX_VERSION "1.1"
 
 #define BUFSIZE 4000
 #define XIL_DONE_DELAY 30
@@ -112,10 +113,11 @@
 #define MAX_FREQ 10
 /*END LED defines*/
 
-char* readBuf;
-char* writeBuf;
-char bitmask[8] = {0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01};
-void* xil_addr_base = NULL;
+static char* readBuf;
+static char* writeBuf;
+static char bitmask[8] = {0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01};
+static void* xil_addr_base = NULL;
+static int xilinx_irq = -1;
 DECLARE_WAIT_QUEUE_HEAD(io_queue);
 DECLARE_WAIT_QUEUE_HEAD(track_queue);
 
@@ -1209,16 +1211,16 @@ static int __init flyer_xil_init_module(void)
     unsigned long phys_addr;
     unsigned long end_addr;
     unsigned long base_len;
-    struct device_node* opb_node = NULL;
+    struct device_node* node = NULL;
     MSG("Module flyer_xil init\n" );
 
     /* get the clock (Hz) for the OPB.*/
-    opb_node = of_find_node_by_path("/plb/opb");
-    if (!opb_node) {
+    node = of_find_node_by_path("/plb/opb");
+    if (!node) {
     	printk(KERN_ERR "(E) Flyer_Xilinx failed to find device tree node /plb/opb\n");
 	return -1;
     }
-    opb_freq = *(u32*)of_get_property(opb_node, "clock-frequency", NULL);
+    opb_freq = *(u32*)of_get_property(node, "clock-frequency", NULL);
 
     readBuf = kmalloc(BUFSIZE, GFP_KERNEL);
     writeBuf = kmalloc(BUFSIZE,GFP_KERNEL);
@@ -1341,32 +1343,40 @@ static int __init flyer_xil_init_module(void)
     //set_usb_led(SOLID_GREEN);
     
     
-    
-    status = request_irq(XILINX_IRQ, flyer_xil_interrupt, 0, "flyer_xil", xil_addr_base);
+    node = of_find_node_by_path("/xilinx");
+
+    // External IRQ 4 on UIC0 is interrupt 27 (PPC 440EP manual page 224).  See DTS file.
+    xilinx_irq = irq_of_parse_and_map(node, 0);
+    status = request_irq(xilinx_irq, flyer_xil_interrupt, 0, "flyer_xil", xil_addr_base);
     if (status) 
     {
-	printk(KERN_ERR "flyer_xil: IRQ %d xil interrupt request failed - status %d!\n", XILINX_IRQ, status);
+	printk(KERN_ERR "flyer_xil: IRQ %d xil interrupt request failed - status %d!\n", res, status);
 	return -EBUSY;
     } 
     
-      
-    status = request_irq(GPT0_IRQ, flyer_xil_status_led_interrupt, 0, "flyer_xil",0);
+    node = of_find_node_by_path("/timer0");
+    // GPT0 on UIC0 is interrupt 18 (PPC 440EP manual page 224).  See DTS file.
+    res = irq_of_parse_and_map(node, 0);
+    status = request_irq(res, flyer_xil_status_led_interrupt, 0, "flyer_xil",0);
     if (status) 
     {
-	printk(KERN_ERR "flyer_xil: IRQ %d status_led_interrupt request failed - status %d!\n", GPT0_IRQ, status);
+	printk(KERN_ERR "flyer_xil: IRQ %d status_led_interrupt request failed - status %d!\n", res, status);
 	return -EBUSY;
     } 
     
-    status = request_irq(GPT1_IRQ, flyer_xil_encoder_interrupt, 0, "flyer_xil",0);
+    // GPT1 on UIC0 is interrupt 19 (PPC 440EP manual page 224).  See DTS file.
+    node = of_find_node_by_path("/timer1");
+    res = irq_of_parse_and_map(node, 0);
+    status = request_irq(res, flyer_xil_encoder_interrupt, 0, "flyer_xil",0);
     if (status) 
     {
-	printk(KERN_ERR "flyer_xil: IRQ %d xil_encoder_interrupt request failed - status %d!\n", GPT1_IRQ, status);
+	printk(KERN_ERR "flyer_xil: IRQ %d xil_encoder_interrupt request failed - status %d!\n", res, status);
 	return -EBUSY;
     } 
    
     
     *((unsigned short*)xil_addr_base + XIL_IO_CHANGE_OFFSET) = 0;
-    printk(KERN_INFO "FlyerII Xilinx driver v%s  %s\n",XILINX_VERSION);   
+    printk(KERN_INFO "FlyerII Xilinx driver v%s\n",XILINX_VERSION);   
     return 0;
 }
 
@@ -1377,7 +1387,11 @@ static void __exit flyer_xil_exit_module(void)
 	kfree(readBuf);
     if (writeBuf)
 	kfree(writeBuf);
-    free_irq(XILINX_IRQ,0);
+    if (xilinx_irq != -1)
+    {
+	free_irq(xilinx_irq,0);
+	xilinx_irq = -1;
+    }
     
     unregister_chrdev(XILINX_CONFIG_MAJOR,"flyer_xil");
     if (xil_addr_base)

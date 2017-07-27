@@ -45,7 +45,7 @@ buildroot_clean:
 #
 .PHONY: kernel
 kernel:
-	make -C ${KERNEL_BASE} V=1 ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} cuImage.yosemite modules
+	make -C ${KERNEL_BASE} V=1 ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} cuImage.yosemite
 	# make -C ${KERNEL_BASE} V=1 ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} yosemite.dtb
 	cp -p ${KERNEL_BASE}/arch/powerpc/boot/cuImage.yosemite ${SROS_ROOT}/output/cuImage.yosemite
 	# cp -p ${KERNEL_BASE}/arch/powerpc/boot/yosemite.dtb ${SROS_ROOT}/output/yosemite.dtb
@@ -72,6 +72,14 @@ kernel_mrproper:
 	make -C ${KERNEL_BASE} V=1 ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} mrproper
 	rm -f ${SROS_ROOT}/output/uImage
 	rm -f ${SROS_ROOT}/output/yosemite.dtb
+
+.PHONY: modules
+modules:
+	make -C ${KERNEL_BASE} V=1 ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} modules
+
+.PHONY: modules_install
+modules_install:
+	make -C ${KERNEL_BASE} V=1 ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} INSTALL_MOD_PATH=../output/rootfs/ modules_install
 
 .PHONY: uboot
 uboot:

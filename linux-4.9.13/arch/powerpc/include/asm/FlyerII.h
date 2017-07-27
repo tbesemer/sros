@@ -6,8 +6,6 @@ typedef volatile __be32 AMCC_REG;
 
 extern void* xil_get_mapped_address(void);
 	
-#define XILINX_IRQ   27
-
 /* handy sizes */
 #define SZ_16				0x00000010
 #define SZ_256				0x00000100
@@ -38,8 +36,6 @@ extern void* xil_get_mapped_address(void);
 
 
 /* General Purpose Timer Registers */
-#define GPT0_IRQ     18
-#define GPT1_IRQ     19
 #define GPT_DOWN_COUNT_IRQ    30
 
 #define GPT_TBC_PHYS_START                      0x0EF600000
