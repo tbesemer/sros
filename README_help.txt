@@ -1,7 +1,18 @@
 
 Primary Make All Build Targets:
 
-  all:                     #  Configure and Build Everything
+  all:                     #  Configure and Build Everything for
+			   #  the Initramfs Install.
+
+  buildroot_production:	   #  Build Buildroot for Production; cleans
+                           #  the old tree out.
+
+  buildroot_production_clean:	   #  Build Buildroot for Production
+                                   #  without cleaning old tree.
+
+  synrad_legacy_all:       #  Build a tar file to install on legacy
+                           #  system for testing upgrade.
+ 
   clean:                   #  Clean Everything
 
 Buildroot Management Targets:
