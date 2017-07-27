@@ -19,7 +19,7 @@ export LEGACY_STARTUP := ${SROS_ROOT}/legacy/home/startup
 #  Master Build Targets
 #
 .PHONY: all
-all:  buildroot_initramfs_defconfig buildroot_initramfs kernel_initramfs_defconfig kernel_initramfs
+all:  buildroot_initramfs_defconfig buildroot_initramfs kernel_initramfs_defconfig kernel_initramfs 
 
 .PHONY: buildroot_production_clean
 buildroot_production: buildroot_clean buildroot_defconfig buildroot
@@ -168,7 +168,7 @@ synrad_legacy_install:
 	@ if [ ! -f ${OLD_UBOOT_TOOL} ]; then \
 	    make synrad_uboot_tools ;\
 	fi
-	bin/do_legacy_core.sh
+	fakeroot bin/do_legacy_core.sh
 
 .PHONY: help
 help:

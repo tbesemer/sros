@@ -10,7 +10,7 @@ Primary Make All Build Targets:
   buildroot_production_clean:	   #  Build Buildroot for Production
                                    #  without cleaning old tree.
 
-  synrad_legacy_all:       #  Build a tar file to install on legacy
+  synrad_legacy_install:   #  Build a tar file to install on legacy
                            #  system for testing upgrade.
  
   clean:                   #  Clean Everything

@@ -6,6 +6,9 @@ setenv load_filestore 'tftp 200000 flyer3d_filestore.img'
 setenv load_ubootenv 'tftp 200000 u-bootenv.img'
 setenv load_ramdisk 'tftp 400000 ramdisk'
 
+run prog_flyer_full
+
+
 # Besemer Network.
 setenv ipaddr 192.168.2.96
 setenv serverip 192.168.2.113

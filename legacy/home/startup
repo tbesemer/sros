@@ -5,11 +5,15 @@
 
 #  Test to see if we should halt on boot
 #
-/usr/bin/fw_printenv | grep -q haltboot
-if [ $? -eq 0 ]
+if [ -f /usr/bin/fw_printenv ]
 then
-    echo "Synrad Boot: Halting"
-    exit 0
+    /usr/bin/fw_printenv | grep -q haltboot
+    if [ $? -eq 0 ]
+    then
+        echo " "
+        echo "Synrad Boot: Halting"
+        exit 0
+    fi
 fi
 
 #  Check to see if we are running on Legacy systme;
@@ -21,6 +25,8 @@ if [ $? -eq 1 ]
 then
     if [ -f /home/cuImage.yosemite.initramfs ]
     then
+        echo " "
+        echo " "
         echo "Initiating New Environmnet Upgrade"
         /bin/umount /filestore
         echo "Update: Erasing /dev/mtd4"

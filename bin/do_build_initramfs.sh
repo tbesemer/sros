@@ -22,6 +22,7 @@ cpio -id  < $CPIO_INPUT
 # Populate from Template
 #
 echo "Populating Initramfs"
+rm -f init
 cp -Rp $INITRAMFS_OVERLAY/* .
 cp -p $OUTPUT_DIR/fw_printenv usr/bin/fw_printenv
 pushd usr/bin

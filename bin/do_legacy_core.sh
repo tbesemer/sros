@@ -33,10 +33,11 @@ cp -p $ROOTFS_OUTPUT home/
 cp -p $INITRAMFS_KERNEL home/
 cp -p $LEGACY_STARTUP home/
 cp -Rp $UBOOT_FW_ENV etc/
-cp -p $OUTPUT_DIR/fw_printenv usr/bin/fw_printenv
+cp -p $OLD_UBOOT_TOOL usr/bin/fw_printenv
 pushd usr/bin
 ln -s fw_printenv fw_setenv
 popd
+chown -R root:root *
 
 #  Package up Legacy
 #
