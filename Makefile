@@ -10,6 +10,11 @@ export CPIO_OUTPUT := ${SROS_ROOT}/output/rootfs_initramfs_kernel.cpio
 export INITRAMFS_OVERLAY :=${SROS_ROOT}/initramfs_overlay
 export ROOTFS_INPUT := ${SROS_ROOT}/output/new_rootfs.tar
 export ROOTFS_OUTPUT := ${SROS_ROOT}/output/rootfs_production.tar
+export UBOOT_FW_ENV := ${SROS_ROOT}/initramfs_overlay/etc/fw_env.config
+export INITRAMFS_KERNEL := ${SROS_ROOT}/output/cuImage.yosemite.initramfs
+export LEGACY_OUTPUT := ${SROS_ROOT}/output/legacy_install.tar
+export OLD_UBOOT_TOOL := ${SROS_ROOT}/synrad_uboot/output/fw_printenv
+export LEGACY_STARTUP := ${SROS_ROOT}/legacy/home/startup
 
 #  Master Build Targets
 #
@@ -140,7 +145,6 @@ uboot_env: uboot
 	  else \
 		make -C ${UBOOT_BASE} CROSS_COMPILE=${TOOLCHAIN_PREFIX} V=1 env;\
 		cp -p ${UBOOT_BASE}/tools/env/fw_printenv output/;\
-		cp -p ${UBOOT_BASE}/tools/env/fw_env.config output/;\
 	  fi
 
 .PHONY: uboot_saveconfig
@@ -154,6 +158,17 @@ initramfs_final: initramfs_final_clean uboot_env
 .PHONY: initramfs_final_clean
 initramfs_final_clean:
 	rm -rf ${STAGING_DIR}/*
+
+.PHONY: synrad_uboot_tools
+synrad_uboot_tools:
+	cd synrad_uboot; ./do_make.sh
+
+.PHONY: synrad_legacy_install
+synrad_legacy_install:
+	@ if [ ! -f ${OLD_UBOOT_TOOL} ]; then \
+	    make synrad_uboot_tools ;\
+	fi
+	bin/do_legacy_core.sh
 
 .PHONY: help
 help:
