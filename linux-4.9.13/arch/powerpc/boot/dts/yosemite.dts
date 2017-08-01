@@ -133,46 +133,68 @@
 			EBC0: ebc {
 				compatible = "ibm,ebc-440ep", "ibm,ebc-440gp", "ibm,ebc";
 				dcr-reg = <0x012 0x002>;
-				#address-cells = <2>;
-				#size-cells = <1>;
 				clock-frequency = <0>; /* Filled in by zImage */
 				interrupts = <0x5 0x1>;
 				interrupt-parent = <&UIC1>;
+				#address-cells = <2>;
+				#size-cells = <1>;
+				ranges;
 
-				nor_flash@0,0 {
-					compatible = "amd,s29gl256n", "cfi-flash";
+				nor_flash@0,FE000000 {
+					compatible = "amd,s29gl256p", "cfi-flash";
 					bank-width = <2>;
-					reg = <0x00000000 0x00000000 0x04000000>;
+					reg = <0 0xFE000000 0x02000000>;
 					#address-cells = <1>;
 					#size-cells = <1>;
-					partition@0 {
-						label = "kernel";
-						reg = <0x00000000 0x001e0000>;
-					};
-					partition@1e0000 {
-						label = "dtb";
-						reg = <0x001e0000 0x00020000>;
-					};
-					partition@200000 {
-						label = "ramdisk";
-						reg = <0x00200000 0x01400000>;
-					};
-					partition@1600000 {
-						label = "jffs2";
-						reg = <0x01600000 0x00400000>;
-					};
-					partition@1a00000 {
-						label = "user";
-						reg = <0x01a00000 0x02540000>;
-					};
-					partition@3f40000 {
-						label = "env";
-						reg = <0x03f40000 0x00040000>;
-					};
-					partition@3f80000 {
-						label = "u-boot";
-						reg = <0x03f80000 0x00080000>;
-					};
+				    	partitions@0 {
+						compatible = "fixed-partitions";
+						#address-cells = <1>;
+						#size-cells = <1>;
+						partition@00000000 {
+							label = "Kernel";
+							reg = <0x00000000 0x00180000>;
+						};
+						partition@00180000 {
+							label = "User Files";
+							reg = <0x00180000 0x01DE0000>;
+						};
+						partition@01F60000 {
+							label = "U-Boot Env";
+							reg = <0x01F60000 0x00020000>;
+						};
+						partition@001F80000 {
+							label = "U-Boot";
+							reg = <0x01F80000 0x00080000>;
+						};
+				    	};
+				};
+				nor_flash@1,FC000000 {
+					compatible = "amd,s29gl256p", "cfi-flash";
+					bank-width = <2>;
+					reg = <0 0xFC000000 0x02000000>;
+					#address-cells = <1>;
+					#size-cells = <1>;
+				    	partitions@1 {
+						compatible = "fixed-partitions";
+						#address-cells = <1>;
+						#size-cells = <1>;
+						partition@00000000 {
+							label = "New Kernel";
+							reg = <0x00000000 0x00800000>;
+						};
+						partition@01800000 {
+							label = "OS Filesystem";
+							reg = <0x00800000 0x01800000>;
+						};
+				    	};
+				};
+
+				/* Below taken from ebony.dts and adapted */
+				nvram@2,0 {
+					/* NVRAM & RTC */
+					compatible = "ds1743-nvram";
+					#bytes = <0x40000>; /* 256 K */
+					reg = <0x00000001 0x00000000 0x00040000>;
 				};
 			};
 
@@ -327,6 +349,8 @@
 		};
 	};
 
+	/* Xilinx is on the EBC but the Flyer_Xilinx.c module handles all setup
+	 * so location in the DTS isn't important. */
 	XILINX: xilinx {
 		interrupt-parent = <&UIC0>;
 		interrupts = <0x1b 0x1>; /* interrupt 27 with low-to-high edge trigger */
