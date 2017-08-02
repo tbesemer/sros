@@ -1,0 +1,234 @@
+====== Building  =======
+
+There are three main make targets:
+
+  1. Default.  Builds BuildRoot for Initramfs, and Kernel.
+  2. 'buildroot_production_clean'. Run it after target 1 (above).
+     This cleans the BuildRoot Tree, and builds one that is
+     for production (larger configuration file/image).
+  3. 'synrad_legacy_install'.  This creates a test file
+     <legacy_install.tar> to test Upgrade.
+
+After build these, the ~sros/output directory looks like this:
+
+total 28804
+-rw-rw-r-- 1 tbesemer tbesemer 6900365 Jul 27 11:32 cuImage.yosemite.initramfs
+-rwxrwxr-x 1 tbesemer tbesemer   32080 Jul 26 21:10 fw_printenv
+-rw-rw-r-- 1 tbesemer tbesemer 9820160 Jul 27 12:30 legacy_install.tar
+-rw-r--r-- 1 tbesemer tbesemer 2836480 Jul 27 06:55 new_rootfs.tar
+-rw-r--r-- 1 tbesemer tbesemer 2602496 Jul 26 21:09 rootfs_initramfs.cpio
+-rw-rw-r-- 1 tbesemer tbesemer 1249622 Jul 27 11:14 rootfs_initramfs_kernel.cpio.igz
+-rw-rw-r-- 1 tbesemer tbesemer 2637312 Jul 27 11:14 rootfs_initramfs_kernel.cpio.tmp
+-rw-rw-r-- 1 tbesemer tbesemer 2877440 Jul 27 06:55 rootfs_production.tar
+-rwxrwxr-x 1 tbesemer tbesemer  524288 Jul 26 21:10 u-boot.bin
+
+NOTES:
+
+This file needs to be updated to point to the old PPC Tools:
+
+    tbesemer@t4linux4:~/src/sros-0726a/sros$ cat synrad_uboot/do_env.sh 
+    export PATH=$PATH:/home/tbesemer/ppc_synrad/usr/bin
+    
+    export CROSS_COMPILE=ppc_4xx-
+
+Change the PATH to point to tools.
+
+Quick Build Summary:
+
+  1. 'make'
+  2. 'make buildroot_production_clean'
+  3. 'synrad_legacy_install'
+
+After that, install <legacy_install.tar> in / on existing target,
+untar it, and then reboot.   Boot Flow below.
+
+=======  Booting and Testing  ==========
+
+#  End of boot into Legacy System.
+#
+Sucessful I2C read: Expected - 512 
+Setting up for USB Server...
+flyer_usb gadget: Flyer disconnected sbs
+USBServer Server Thread is 95
+Could not open file /home/FieldCorrection_X.fcd, flags:0, err:2
+
+Could not open file /home/FieldCorrection_Y.fcd, flags:0, err:2
+
+Setting up for Ethernet Server...
+Ethernet Server Thread is 96
+Ethernet Server Urgent Thread is 97
+
+#  Grab <legacy_install.tar>
+#
+[root@Flyer3D% /]$ifconfig eth0 192.168.2.90
+[root@Flyer3D% /]$wget http://192.168.2.113/legacy_install.tar
+Connecting to 192.168.2.113[192.168.2.113]:80
+legacy_install.tar     0% # It installs.
+
+[root@Flyer3D% /]$pwd
+/
+[root@Flyer3D% /]$ls
+bin                 lib                 sbin
+dev                 linuxrc             tmp
+etc                 mnt                 usr
+filestore           network             var
+home                proc
+legacy_install.tar  rd
+
+# Install it.  This process has to be done by existing installer.
+#
+[root@Flyer3D% /]$ttar xf legacy_install.tar 
+
+# What we installed:
+#
+[root@Flyer3D% /]$ttar tf legacy_install.tar 
+etc
+etc/fw_env.config
+home
+home/startup
+home/cuImage.yosemite.initramfs
+home/rootfs_production.tar
+usr
+usr/bin
+usr/bin/fw_printenv
+usr/bin/fw_setenv
+
+#  Sync and reboot.  It is assumed above files were installed by the
+#  current installer, and then the reboot occurs.
+#
+[root@Flyer3D% /]$sync
+[root@Flyer3D% /]$reboot
+
+
+#  End of reboot, it boots normally, but new /home/startup is
+#  invoked.
+#
+setting gateway to 255.255.255.255
+route: SIOC[ADD|DEL]RT: Network is unreachable
+adding dns 255.255.255.255
+adding dns 255.255.255.255
+
+
+BusyBox v1.1.2 (2008.11.18-23:21+0000) Built-in shell (ash)
+Enter 'help' for a list of built-in commands.
+
+[root@Flyer3D% /]$ 
+ 
+Initiating New Environmnet Upgrade
+Update: Erasing /dev/mtd4
+Update: Installing New Kernel
+Update: Setting Environment Variables
+Update: Reboot to new Kernel
+
+#  After installing the new Kernel <cuImage.yosemite.initramfs> at the
+#  start of existing MTD4, it reboots into it:
+
+Jun 25 00:53:56 Flyer3D% daemon.info init: The system is going down NOW !!
+The system is going down NOW !!
+Jun 25 00:53:56 Flyer3D% daemon.info init: Sending SIGTERM to all processes.
+Sending SIGTERM to all processes.
+Jun 25 00:53:56 Flyer3D% syslog.info System log daemon exiting.
+Exiting Syslogd!
+SenPlease stand by while rebooting the system.
+Restarting system.
+
+
+#  New Kernel is loaded from new address; new start address was
+#  put in place by </home/startup>, which is the new one.
+#
+Hit any key to stop autoboot:  0
+## Booting kernel from Legacy Image at fc000000 ...
+   Image Name:   Linux-4.9.13
+   Image Type:   PowerPC Linux Kernel Image (gzip compressed)
+   Data Size:    6900301 Bytes =  6.6 MB
+   Load Address: 00f00000
+   Entry Point:  00f01100
+   Verifying Checksum ... OK
+   Uncompressing Kernel Image ... OK
+CPU clock-frequency <- 0x27bc86a4 (667MHz)
+
+#  Boots into the new Kernel with initramfs, and runs /init.
+#  Boot State 1 installs new Root FS from MTD1 /home/prod_rootfs.tar
+#
+Synrad Boot: Boot State: 1
+Synrad Boot: Boot State 1, Install Root FS
+Boot State 1: Mounting Orginal Root FS
+Boot State 1: Erasing /dev/mtd5
+Boot State 1: Mounting New Root FS
+Boot State 1: Populating New Root FS
+Boot State 1: Setting Boot State to 2
+Boot State 1: Executing switch_root
+
+# After completing, it just does a 'switch_root' into the new
+# Root FS.
+#
+Starting logging: OK
+Initializing random number generator... [  108.410862] random: dd: uninitialized urandom read (512 bytes read)
+done.
+Starting network: ip: RTNETLINK answers: File exists
+FAIL
+
+Welcome to Buildroot
+buildroot login: root
+
+# Simply Reboot to show normal operation.
+#
+
+# reboot
+# Stopping network: ifdown: interface lo not configured
+OK
+Saving random seed... [  130.362938] random: dd: uninitialized urandom read (512 bytes read)
+done.
+Stopping logging: OK
+The system is going down NOW!
+Sent SIGTERM to all processes
+Sent SIGKILL to all processes
+Requesting system reboot
+[  132.409518] reboot: Restarting system
+
+#  Again, we boot into new Kernel.
+#
+Hit any key to stop autoboot:  3
+## Booting kernel from Legacy Image at fc000000 ...
+   Image Name:   Linux-4.9.13
+   Image Type:   PowerPC Linux Kernel Image (gzip compressed)
+   Data Size:    6900301 Bytes =  6.6 MB
+   Load Address: 00f00000
+   Entry Point:  00f01100
+   Verifying Checksum ... OK
+   Uncompressing Kernel Image ... OK
+
+#  The command line could be cleaned up; this scheme ignores the
+#  root= specifier.  It does honer IP address.
+#
+[    0.000000] Kernel command line: root=/dev/mtdblock1 rw rootfstype=jffs2 ip=1
+92.168.90.44:172.28.168.50:::flyer3d:eth0:off panic=1 console=ttyS0,115200
+
+# Boot State 2 is normal boot.
+#
+Synrad Boot: Boot State: 2
+Synrad Boot: Boot State 2, Normal Boot
+Boot State 2: Mounting New Root FS
+Boot State 2: Executing switch_root
+Starting logging: OK
+Initializing random number generator... [    3.426930] random: dd: uninitialized urandom read (512 bytes read)
+done.
+Starting network: ip: RTNETLINK answers: File exists
+FAIL
+
+#  Not much else; it's bare Linux install.
+#
+Welcome to Buildroot
+buildroot login: root
+# ls
+# pwd
+/root
+# ount
+/dev/mtdblock5 on / type jffs2 (rw,relatime)
+proc on /proc type proc (rw,relatime)
+devpts on /dev/pts type devpts (rw,relatime,gid=5,mode=620,ptmxmode=666)
+tmpfs on /dev/shm type tmpfs (rw,relatime,mode=777)
+tmpfs on /tmp type tmpfs (rw,relatime)
+tmpfs on /run type tmpfs (rw,nosuid,nodev,relatime,mode=755)
+sysfs on /sys type sysfs (rw,relatime)
+# 

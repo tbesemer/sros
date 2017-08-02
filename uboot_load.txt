@@ -1,0 +1,41 @@
+#  Reset original Synrad environment.
+#
+setenv load_kernel 'tftp 200000 uImage'
+setenv load_rootfs 'tftp 200000 flyer3d_flash.img'
+setenv load_filestore 'tftp 200000 flyer3d_filestore.img'
+setenv load_ubootenv 'tftp 200000 u-bootenv.img'
+setenv load_ramdisk 'tftp 400000 ramdisk'
+
+run prog_flyer_full
+
+
+# Besemer Network.
+setenv ipaddr 192.168.2.96
+setenv serverip 192.168.2.113
+
+#  NFS Root FS Boot.
+#
+setenv bootargs console=ttyS0,115200 root=/dev/nfs rw nfsroot=192.168.2.113:/home/tbesemer/synradfs rootfstype=nfs ip=dhcp
+
+#  MTD Root FS Boot.
+#
+setenv bootargs console=ttyS0,115200 root=/dev/mtdblock5 rw s rootfstype=jffs2 ip=dhcp
+
+#  Initramfs Boot.
+#
+setenv bootargs console=ttyS0,115200 ip=dhcp
+
+# Network boot.
+#
+tftp 2000000 cuImage.yosemite
+bootm 2000000
+
+# Initramfs Kernel Network boot.
+#
+tftp 2000000 cuImage.yosemite.initramfs
+bootm 2000000
+
+
+# Flash boot.
+#
+bootm FC000000

@@ -1,0 +1,68 @@
+#!/bin/sh
+# Version: 4.54
+# Run anything that is outside of sysinit
+#
+
+#  Test to see if we should halt on boot
+#
+if [ -f /usr/bin/fw_printenv ]
+then
+    /usr/bin/fw_printenv | grep -q haltboot
+    if [ $? -eq 0 ]
+    then
+        echo " "
+        echo "Synrad Boot: Halting"
+        exit 0
+    fi
+fi
+
+#  Check to see if we are running on Legacy systme;
+#  if so, check to see if we have a new Kernel, and
+#  if so, install it.
+#
+cat /proc/mtd | grep -q mtd5
+if [ $? -eq 1 ]
+then
+    if [ -f /home/cuImage.yosemite.initramfs ]
+    then
+        echo " "
+        echo " "
+        echo "Initiating New Environmnet Upgrade"
+        /bin/umount /filestore
+        echo "Update: Erasing /dev/mtd4"
+        /usr/sbin/flash_eraseall -q /dev/mtd4
+        echo "Update: Installing New Kernel"
+        cat /home/cuImage.yosemite.initramfs >> /dev/mtd4
+        echo "Update: Setting Environment Variables"    
+        /usr/bin/fw_setenv kernel_addr 
+        /usr/bin/fw_setenv kernel_addr fc000000
+        /usr/bin/fw_setenv boot_state 
+        /usr/bin/fw_setenv boot_state 1
+        sync
+        echo "Update: Reboot to new Kernel"    
+        reboot
+    fi
+fi
+
+# Run the script to test for flyermarker updates
+
+/home/updateScripts/updatekernel
+/home/updateScripts/updatemosaic
+
+# NOTE: ONLY ONE OF THESE STATEMENTS BELOW CAN BE UNCOMMENTED
+
+# UNCOMMENT BELOW FOR PRODUCTION SYSTEM
+/sbin/hwclock --utc --hctosys
+/home/mosaic&
+
+# UNCOMMENT BELOW FOR DEVELOPMENT SYSTEM
+#/home/flyertest&
+
+# END NOTE
+
+# webserver
+/sbin/boa&
+# UNCOMMENT BELOW FOR CUSTOMER REFLASH
+#sleep 7
+#/home/setled
+#ash < /dev/ttygserial > /dev/ttygserial 2>&1
