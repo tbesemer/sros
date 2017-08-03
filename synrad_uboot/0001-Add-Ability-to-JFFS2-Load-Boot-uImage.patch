@@ -1,5 +1,5 @@
 From 203349cdd0120fc9c2776d26544591f029a3359c Mon Sep 17 00:00:00 2001
-From: Thomas Besemer <tbesemer@gmail.com>
+From: Thomas Besemer <thomas.besemer@gmail.com>
 Date: Thu, 3 Aug 2017 12:23:31 -0700
 Subject: [PATCH] Add Ability to JFFS2 Load/Boot uImage.
 
