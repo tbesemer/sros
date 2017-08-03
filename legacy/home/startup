@@ -16,12 +16,11 @@ then
     fi
 fi
 
-#  Check to see if we are running on Legacy systme;
-#  if so, check to see if we have a new Kernel, and
-#  if so, install it.
+#  Check to see if we have a new version of U-Boot and
+#  Kernel; if so, install U-Boot, and reboot into
+#  the new Kernel.
 #
-cat /proc/mtd | grep -q mtd5
-if [ $? -eq 1 ]
+if [ -f /home/u-boot.bin ]
 then
     if [ -f /home/cuImage.yosemite.initramfs ]
     then
@@ -29,13 +28,15 @@ then
         echo " "
         echo "Initiating New Environmnet Upgrade"
         /bin/umount /filestore
-        echo "Update: Erasing /dev/mtd4"
-        /usr/sbin/flash_eraseall -q /dev/mtd4
-        echo "Update: Installing New Kernel"
-        cat /home/cuImage.yosemite.initramfs >> /dev/mtd4
+        echo "Update: Erasing /dev/mtd3"
+        /usr/sbin/flash_eraseall -q /dev/mtd3
+        echo "Update: Installing New U-Boot"
+        cat /home/u-boot.bin >> /dev/mtd3
+	rm -f /home/u-boot.bin
         echo "Update: Setting Environment Variables"    
-        /usr/bin/fw_setenv kernel_addr 
-        /usr/bin/fw_setenv kernel_addr fc000000
+	mv /home/cuImage.yosemite.initramfs /cuImage.yosemite.initramfs 
+        /usr/bin/fw_setenv flyer 
+        /usr/bin/fw_setenv flyer 'run flashargs addip addtty;fsload 0x200000 cuImage.yosemite.initramfs; bootm 0x200000'
         /usr/bin/fw_setenv boot_state 
         /usr/bin/fw_setenv boot_state 1
         sync

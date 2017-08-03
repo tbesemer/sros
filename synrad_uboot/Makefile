@@ -8,9 +8,11 @@ default: uboot_env
 uboot:
 	make -C ${UBOOT_BASE}  V=1 flyer3d_config
 	make -C ${UBOOT_BASE}  V=1 
+	cp -p ${UBOOT_BASE}/u-boot.bin output/
 
 uboot_no_config:
 	make -C ${UBOOT_BASE}  V=1 
+	cp -p ${UBOOT_BASE}/u-boot.bin output/
 
 
 .PHONY: uboot_env

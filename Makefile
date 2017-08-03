@@ -14,6 +14,7 @@ export UBOOT_FW_ENV := ${SROS_ROOT}/initramfs_overlay/etc/fw_env.config
 export INITRAMFS_KERNEL := ${SROS_ROOT}/output/cuImage.yosemite.initramfs
 export LEGACY_OUTPUT := ${SROS_ROOT}/output/legacy_install.tar
 export OLD_UBOOT_TOOL := ${SROS_ROOT}/synrad_uboot/output/fw_printenv
+export SYNRAD_UBOOT := ${SROS_ROOT}/synrad_uboot/output/u-boot.bin
 export LEGACY_STARTUP := ${SROS_ROOT}/legacy/home/startup
 
 #  Master Build Targets

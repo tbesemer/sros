@@ -34,6 +34,7 @@ cp -p $INITRAMFS_KERNEL home/
 cp -p $LEGACY_STARTUP home/
 cp -Rp $UBOOT_FW_ENV etc/
 cp -p $OLD_UBOOT_TOOL usr/bin/fw_printenv
+cp -p $SYNRAD_UBOOT home/u-boot.bin
 pushd usr/bin
 ln -s fw_printenv fw_setenv
 popd

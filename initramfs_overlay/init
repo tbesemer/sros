@@ -18,25 +18,38 @@ process_boot_state_1()
     echo "Synrad Boot: Boot State 1, Install Root FS"
 
     echo "Boot State 1: Mounting Orginal Root FS"
-    /bin/mkdir /oldrootfs
-    /bin/mount -t jffs2 /dev/mtdblock1 /oldrootfs
-    if [ ! -f /oldrootfs/home/rootfs_production.tar ]
+    /bin/mkdir /mnt/oldrootfs
+    /bin/mount -t jffs2 /dev/mtdblock1 /mnt/oldrootfs
+    if [ ! -f /mnt/oldrootfs/home/rootfs_production.tar ]
     then
         echo "Boot State 1: New Filesystem Missing, Running Init"
         exec /sbin/init $*
     fi
 
-    echo "Boot State 1: Erasing /dev/mtd5"
-    /usr/sbin/flash_erase -j -q /dev/mtd5 0 0
+    #  Save off anything that needs to be preserved over the Upgrade.
+    #
+    /sbin/mke2fs /dev/ram0
+    mkdir /ramdisk
+    /bin/mount /dev/ram0 /ramdisk
+    cp -p /mnt/oldrootfs/home/rootfs_production.tar /ramdisk/rootfs_production.tar
+    cp -p /mnt/oldrootfs/home/startup /ramdisk/startup
+    cp -p /mnt/oldrootfs/cuImage.yosemite.initramfs /ramdisk/cuImage.yosemite.initramfs
 
-    echo "Boot State 1: Mounting New Root FS"
-    /bin/mkdir -p /mnt/newrootfs
-    /bin/mount -t jffs2 /dev/mtdblock5 /mnt/newrootfs
+    echo "Boot State 1: Erasing /dev/mtd1"
+    /bin/umount /dev/mtdblock1
+    /usr/sbin/flash_erase -j -q /dev/mtd1 0 0
 
     echo "Boot State 1: Populating New Root FS"
+    mkdir /mnt/newrootfs
+    /bin/mount -t jffs2 /dev/mtdblock1 /mnt/newrootfs
     cd /mnt/newrootfs
-    /bin/tar xf /oldrootfs/home/rootfs_production.tar
-    /bin/umount /dev/mtdblock1
+    /bin/tar xf /ramdisk/rootfs_production.tar
+    mkdir -p /mnt/newrootfs/home
+    cp -p /ramdisk/startup /mnt/newrootfs/home/startup
+    cp -p /ramdisk/cuImage.yosemite.initramfs /mnt/newrootfs/cuImage.yosemite.initramfs
+    cd
+
+    /bin/umount /dev/ram0
 
     echo "Boot State 1: Setting Boot State to 2"
     /usr/bin/fw_setenv boot_state
@@ -56,7 +69,7 @@ process_boot_state_2()
 
     echo "Boot State 2: Mounting New Root FS"
     /bin/mkdir -p /mnt/newrootfs
-    /bin/mount -t jffs2 /dev/mtdblock5 /mnt/newrootfs
+    /bin/mount -t jffs2 /dev/mtdblock1 /mnt/newrootfs
 
     echo "Boot State 2: Executing switch_root"
     /bin/umount /proc
