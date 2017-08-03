@@ -366,6 +366,17 @@
 //#define CONFIG_CMD_DTT
 //#define CONFIG_CMD_PCI
 
+/*  JFSS2 Configuration for Loading Kernel.
+ */
+#define	CONFIG_CMD_JFFS2
+#undef	CONFIG_JFFS2_CMDLINE
+#undef CONFIG_CMD_MTDPARTS
+#define CONFIG_JFFS2_DEV                "nor0"
+#define CONFIG_JFFS2_PART_SIZE          0x01DE0000
+#define CONFIG_JFFS2_PART_OFFSET        0x00180000
+/*  END JFSS2 Configuration for Loading Kernel.
+ */
+
 #ifdef CONFIG_440EP
     #define CONFIG_CMD_MII
     #define CONFIG_CMD_USB

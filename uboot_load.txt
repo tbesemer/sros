@@ -39,3 +39,7 @@ bootm 2000000
 # Flash boot.
 #
 bootm FC000000
+
+#  JFSS2 Boot
+#
+setenv flyer 'run flashargs addip addtty;fsload 0x200000 cuImage.yosemite.initramfs; bootm 0x200000'

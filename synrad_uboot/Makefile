@@ -9,6 +9,10 @@ uboot:
 	make -C ${UBOOT_BASE}  V=1 flyer3d_config
 	make -C ${UBOOT_BASE}  V=1 
 
+uboot_no_config:
+	make -C ${UBOOT_BASE}  V=1 
+
+
 .PHONY: uboot_env
 uboot_env: uboot
 	make -C ${UBOOT_BASE}  V=1 env
