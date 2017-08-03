@@ -36,8 +36,9 @@ clean:	kernel_mrproper buildroot_clean
 .PHONY: buildroot
 buildroot:
 	make -C ${BUILDROOT_BASE}
-	cp -p ${BUILDROOT_BASE}/output/images/rootfs.tar ${SROS_ROOT}/output/new_rootfs.tar
-	fakeroot bin/do_build_rootfs.sh
+	cp -p ${BUILDROOT_BASE}/output/images/rootfs.tar ${SROS_ROOT}/output/
+	# cp -p ${BUILDROOT_BASE}/output/images/rootfs.tar ${SROS_ROOT}/output/new_rootfs.tar
+	#fakeroot bin/do_build_rootfs.sh
 
 .PHONY: buildroot_initramfs
 buildroot_initramfs:
