@@ -23,7 +23,7 @@ export LEGACY_STARTUP := ${SROS_ROOT}/legacy/home/startup
 all:  buildroot_initramfs_defconfig buildroot_initramfs kernel_initramfs_defconfig kernel_initramfs 
 
 .PHONY: buildroot_production_clean
-buildroot_production: buildroot_clean buildroot_defconfig buildroot
+buildroot_production_clean: buildroot_clean buildroot_defconfig buildroot
 
 .PHONY: buildroot_production_noclean
 buildroot_production_noclean: buildroot
