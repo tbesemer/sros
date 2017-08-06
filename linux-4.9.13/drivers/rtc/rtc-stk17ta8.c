@@ -291,6 +291,8 @@ static int stk17ta8_rtc_probe(struct platform_device *pdev)
 	void __iomem *ioaddr;
 	int ret = 0;
 
+printk( "BESEMER: stk17ta8_rtc_probe(): Called\n" );
+
 	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
 	if (!pdata)
 		return -ENOMEM;
@@ -351,11 +353,19 @@ static int stk17ta8_rtc_remove(struct platform_device *pdev)
 /* work with hotplug and coldplug */
 MODULE_ALIAS("platform:stk17ta8");
 
+
+static const struct of_device_id __maybe_unused stk17ta8_rtc_of_match[] = {
+        { .compatible = "simtek,stk17ta8", },
+        { }
+};
+MODULE_DEVICE_TABLE(of, stk17ta8_rtc_of_match);
+
 static struct platform_driver stk17ta8_rtc_driver = {
 	.probe		= stk17ta8_rtc_probe,
 	.remove		= stk17ta8_rtc_remove,
 	.driver		= {
-		.name	= "stk17ta8",
+		.name	= "rtc-stk17ta8",
+                .of_match_table = of_match_ptr(stk17ta8_rtc_of_match),
 	},
 };
 

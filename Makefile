@@ -92,6 +92,9 @@ kernel_initramfs: initramfs_final
 	cp -p ${KERNEL_BASE}/arch/powerpc/boot/cuImage.yosemite ${SROS_ROOT}/output/cuImage.yosemite.initramfs
 	cp output/cuImage.yosemite.initramfs /tftpboot/
 
+.PHONY: kernel_initramfs_modules
+kernel_initramfs_modules: 
+	make -C ${KERNEL_BASE} V=1 ARCH=powerpc CROSS_COMPILE=${TOOLCHAIN_PREFIX} modules
 
 .PHONY: kernel_defconfig
 kernel_defconfig:

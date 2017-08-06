@@ -184,6 +184,12 @@
 						};
 				    	};
 				};
+
+                                rtc@3,FB100000 {
+                                    compatible = "simtek,stk17ta8";
+                                    #bytes = <0x20000>;
+                                    reg = <0 0xFB100000 0x00020000>;
+                                };
 			};
 
 			UART0: serial@ef600300 {
