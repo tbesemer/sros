@@ -200,6 +200,15 @@
 					#bytes = <0x40000>; /* 256 K */
 					reg = <0x00000001 0x00000000 0x00040000>;
 				};
+
+				rtc@3,FB100000 {
+					/* Simetek is register compatible with
+					 * CY14B256k RTC chip on Flyer3D
+					 */
+					compatible = "simtek,stk17ta8";
+					#bytes = <0x20000>;
+					reg = <0 0xFB100000 0x00020000>;
+				};
 			};
 
 			UART0: serial@ef600300 {
