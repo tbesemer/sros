@@ -193,14 +193,6 @@
 				    	};
 				};
 
-				/* Below taken from ebony.dts and adapted */
-				nvram@2,0 {
-					/* NVRAM & RTC */
-					compatible = "ds1743-nvram";
-					#bytes = <0x40000>; /* 256 K */
-					reg = <0x00000001 0x00000000 0x00040000>;
-				};
-
 				rtc@3,FB100000 {
 					/* Simetek is register compatible with
 					 * CY14B256k RTC chip on Flyer3D
