@@ -155,7 +155,7 @@
 							reg = <0x00000000 0x00180000>;
 						};
 						partition@00180000 {
-							label = "User Files";
+							label = "OS Filesystem";
 							reg = <0x00180000 0x01DE0000>;
 						};
 						partition@01F60000 {
@@ -182,14 +182,6 @@
 							label = "Customer filestore";
 							reg = <0x00000000 0x02000000>;
 						};
-						/*partition@00000000 {
-							label = "New Kernel";
-							reg = <0x00000000 0x00800000>;
-						};
-						partition@01800000 {
-							label = "OS Filesystem";
-							reg = <0x00800000 0x01800000>;
-						};*/
 				    	};
 				};
 
