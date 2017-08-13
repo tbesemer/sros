@@ -16,6 +16,8 @@ export LEGACY_OUTPUT := ${SROS_ROOT}/output/legacy_install.tar
 export OLD_UBOOT_TOOL := ${SROS_ROOT}/synrad_uboot/output/fw_printenv
 export SYNRAD_UBOOT := ${SROS_ROOT}/synrad_uboot/output/u-boot.bin
 export LEGACY_STARTUP := ${SROS_ROOT}/legacy/home/startup
+export UPGRADE_SRC := ${SROS_ROOT}/upgrade/sw-description
+export UPGRADE_STAGING := ${SROS_ROOT}/output
 
 #  Master Build Targets
 #
@@ -77,6 +79,14 @@ buildroot_xconfig:
 buildroot_clean:
 	make -C ${BUILDROOT_BASE} clean
 	rm -f ${BUILDROOT_BASE}/.config
+
+.PHONY: swupdate_config
+swupdate_config:
+	make -C ${BUILDROOT_BASE} swupdate-menuconfig
+
+.PHONY: build_upgrade
+build_upgrade:
+	bin/do_build_swu.sh
 
 #  Kernel Build Targets.
 #

@@ -1,0 +1,48 @@
+software =
+{
+    version = "1.0.1";
+
+    amcc = {
+        hardware-compatibility: [ "1.0" ];
+    };
+
+    stable:
+    {
+	mtd1:
+	{
+	    images: (	
+	    {
+	       filename = "rootfs.jffs2";
+	       type = "flash";
+	       device = "mtd1";
+	       dest = "/dev/mtdblock1";
+	    }
+	    );
+
+            uboot: (
+ 	    {
+		name = "rootfs_part_test";
+		value = "1";
+            }
+	    );
+	}
+	mtd4:
+	{
+	    images: (	
+	    {
+	       filename = "rootfs.jffs2";
+	       type = "flash";
+	       device = "mtd4";
+	       dest = "/dev/mtdblock4";
+	    }
+	    );
+
+            uboot: (
+ 	    {
+		name = "rootfs_part_test";
+		value = "4";
+            }
+	    );
+	}
+    }
+}
